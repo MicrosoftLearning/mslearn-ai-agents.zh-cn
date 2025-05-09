@@ -1,14 +1,12 @@
 ---
 lab:
-  title: 在 AI 代理中使用自定义函数
-  description: 了解如何使用函数向代理添加自定义功能。
+  title: 部署 AI 代理
+  description: 使用 Azure AI 代理服务开发使用内置工具的代理。
 ---
 
-# 在 AI 代理中使用自定义函数
+# 部署 AI 代理
 
-在本练习中，你将探索如何创建可以使用自定义函数作为工具完成任务的代理。
-
-你将生成简单的技术支持代理，以收集技术问题的详细信息并生成支持工单。
+在本练习中，你将使用 Azure AI 代理服务创建一个简单的代理来分析数据和创建图表。 代理使用内置 *代码解释器* 工具动态生成创建图表所需的代码作为图像，然后保存生成的图表图像。
 
 完成此练习大约需要 30 分钟。
 
@@ -64,9 +62,9 @@ lab:
 
 1. 等待部署完成。
 
-## 开发使用函数工具的代理
+## 创建代理客户端应用
 
-在 AI Foundry 中创建项目后，让我们开发使用自定义函数工具实现代理的应用。
+现在，你已准备好创建使用代理的客户端应用。 GitHub 存储库中已经提供了部分代码。
 
 ### 克隆包含应用程序代码的存储库
 
@@ -96,11 +94,11 @@ lab:
 1. 输入以下命令，将工作目录更改为包含代码文件的文件夹，并列出所有文件。
 
     ```
-   cd ai-agents/Labfiles/03-ai-agent-functions/Python
+   cd ai-agents/Labfiles/02-build-ai-agent/Python
    ls -a -l
     ```
 
-    提供的文件包含应用程序代码和配置设置文件。
+    提供的文件包含应用程序代码、配置设置和数据。
 
 ### 配置应用程序设置
 
@@ -111,8 +109,6 @@ lab:
    ./labenv/bin/Activate.ps1
    pip install python-dotenv azure-identity azure-ai-projects
     ```
-
-    >**备注：** 可以忽略库安装过程中显示的任何警告或错误消息。
 
 1. 输入以下命令以编辑已提供的配置文件：
 
@@ -125,62 +121,27 @@ lab:
 1. 在代码文件中，将 **your_project_connection_string** 占位符替换为项目的连接字符串（从 Azure AI Foundry 门户中的项目“**概述**”页复制），并将 **your_model_deployment** 占位符替换为分配给 gpt-4o 模型部署的名称。
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
-### 定义自定义函数
+### 为代理应用编写代码
 
-1. 输入以下命令以编辑为函数代码提供的代码文件：
+> **提示**：添加代码时，请务必保持正确的缩进。 使用注释缩进级别作为指南。
 
-    ```
-   code user_functions.py
-    ```
-
-1. 查找注释 **Create a function to submit a support ticket** 并添加以下代码，以生成工单编号并将支持工单另存为文本文件。
-
-    ```python
-   # Create a function to submit a support ticket
-   def submit_support_ticket(email_address: str, description: str) -> str:
-        script_dir = Path(__file__).parent  # Get the directory of the script
-        ticket_number = str(uuid.uuid4()).replace('-', '')[:6]
-        file_name = f"ticket-{ticket_number}.txt"
-        file_path = script_dir / file_name
-        text = f"Support ticket: {ticket_number}\nSubmitted by: {email_address}\nDescription:\n{description}"
-        file_path.write_text(text)
-    
-        message_json = json.dumps({"message": f"Support ticket {ticket_number} submitted. The ticket file is saved as {file_name}"})
-        return message_json
-    ```
-
-1. 查找注释 **Define a set of callable functions** 并添加以下代码，该代码静态定义此代码文件中的一组可调用函数（在本例中，只有一个函数 - 但在实际解决方案中，可能具有多个代理可调用的函数）：
-
-    ```python
-   # Define a set of callable functions
-   user_functions: Set[Callable[..., Any]] = {
-        submit_support_ticket
-    }
-    ```
-1. 保存文件 (*CTRL+S*)。
-
-### 写入代码以实现可以使用函数的代理
-
-1. 输入以下命令以开始编辑代理代码。
+1. 输入以下命令以编辑已提供的代码文件：
 
     ```
-    code agent.py
+   code agent.py
     ```
 
-    > **提示**：向代码文件添加代码时，请务必保持正确的缩进。
-
-1. 查看现有代码，该代码检索应用程序配置设置并设置循环，用户可在其中为代理输入提示。 该文件的其余部分包括注释，可以在其中添加必要的代码来实现技术支持代理。
-1. 查找注释 **Add references** 并添加以下代码，以导入生成将函数代码用作工具的 Azure AI 代理所需的类：
+1. 查看现有代码，该代码检索应用程序配置设置并从要分析的 *data.txt* 加载数据。 该文件的其余部分包含注释，可以在其中添加必要的代码来实现数据分析代理。
+1. 查找注释 **Add references** 并添加以下代码，以导入需要使用内置代码解释器工具的 Azure AI 代理的类：
 
     ```python
    # Add references
    from azure.identity import DefaultAzureCredential
    from azure.ai.projects import AIProjectClient
-   from azure.ai.projects.models import FunctionTool, ToolSet
-   from user_functions import user_functions
+   from azure.ai.projects.models import FilePurpose, CodeInterpreterTool
     ```
 
-1. 查找注释 **Connect to the Azure AI Foundry project**，然后添加以下代码，以使用当前 Azure 凭据连接到 Azure AI Foundry 项目。
+1. 查找注释 **Connect to the Azure AI Foundry project** 并添加以下代码，以连接到 Azure AI 项目。
 
     > **提示**：注意保持正确缩进级别。
 
@@ -192,47 +153,58 @@ lab:
              exclude_managed_identity_credential=True),
         conn_str=PROJECT_CONNECTION_STRING
    )
+   with project_client:
     ```
-    
-1. 查找注释 **Define an agent that can use the custom functions** 部分，并添加以下代码以将函数代码添加到工具集，然后创建可以使用工具集的代理和运行聊天会话的线程。
+
+    该代码使用当前的 Azure 凭据连接到 Azure AI Foundry 项目。 最后的 *with project_client* 语句启动一个代码块，该代码块定义客户端的范围，确保在块中的代码完成时将其清理干净。
+
+1. 在 *with project_client* 块内，查找注释 **Upload the data file and create a CodeInterpreterTool**，并添加以下代码，以将数据文件上传到项目，并创建可访问其中数据的 CodeInterpreterTool：
 
     ```python
-   # Define an agent that can use the custom functions
-   with project_client:
+   # Upload the data file and create a CodeInterpreterTool
+   file = project_client.agents.upload_file_and_poll(
+        file_path=file_path, purpose=FilePurpose.AGENTS
+   )
+   print(f"Uploaded {file.filename}")
 
-        functions = FunctionTool(user_functions)
-        toolset = ToolSet()
-        toolset.add(functions)
-            
-        agent = project_client.agents.create_agent(
-            model=MODEL_DEPLOYMENT,
-            name="support-agent",
-            instructions="""You are a technical support agent.
-                            When a user has a technical issue, you get their email address and a description of the issue.
-                            Then you use those values to submit a support ticket using the function available to you.
-                            If a file is saved, tell the user the file name.
-                         """,
-            toolset=toolset
-        )
+   code_interpreter = CodeInterpreterTool(file_ids=[file.id])
+    ```
+    
+1. 查找注释 **Define an agent that uses the CodeInterpreterTool** 并添加以下代码，以定义用于分析数据的 AI 代理，并可以使用前面定义的代码解释器工具：
 
-        thread = project_client.agents.create_thread()
-        print(f"You're chatting with: {agent.name} ({agent.id})")
-
+    ```python
+   # Define an agent that uses the CodeInterpreterTool
+   agent = project_client.agents.create_agent(
+        model=MODEL_DEPLOYMENT,
+        name="data-agent",
+        instructions="You are an AI agent that analyzes the data in the file that has been uploaded. If the user requests a chart, create it and save it as a .png file.",
+        tools=code_interpreter.definitions,
+        tool_resources=code_interpreter.resources,
+   )
+   print(f"Using agent: {agent.name}")
     ```
 
-1. 查找注释 **Send a prompt to the agent**，并添加以下代码以将用户的提示添加为消息并运行线程。
+1. 查找注释 **Create a thread for the conversation**并添加以下代码，以启动与代理的聊天会话将在其中运行的线程：
+
+    ```python
+   # Create a thread for the conversation
+   thread = project_client.agents.create_thread()
+    ```
+    
+1. 请注意，下一部分代码设置一个循环，以便用户输入提示，当用户输入“退出”时结束。
+
+1. 查找注释 **Send a prompt to the agent** 并添加以下代码，将用户消息添加到提示（以及之前加载的文件中的数据），然后使用代理运行线程。
 
     ```python
    # Send a prompt to the agent
    message = project_client.agents.create_message(
         thread_id=thread.id,
         role="user",
-        content=user_prompt
-   )
-   run = project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
-    ```
+        content=user_prompt,
+    )
 
-    > **备注**：使用 **create_and_process_run** 方法运行线程使代理能够自动查找函数，并根据函数名称和参数选择使用它们。 作为替代方法，可以使用 **create_run** 方法，在这种情况下，你将负责编写代码来轮询运行状态以确定何时需要函数调用、调用函数并将结果返回到代理。
+    run = project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+     ```
 
 1. 查找注释 **Check the run status for failures** 并添加以下代码，以显示发生的任何错误。
 
@@ -263,6 +235,15 @@ lab:
         print(f"{message_data.role}: {last_message_content.text.value}\n")
     ```
 
+1. 查找注释 **Get any generated files** 并添加以下代码，以便从消息（这指示代理在其内部存储中保存了文件）获取任何文件路径批注，并将文件复制到应用文件夹。
+
+    ```python
+   # Get any generated files
+   for file_path_annotation in messages.file_path_annotations:
+        project_client.agents.save_file(file_id=file_path_annotation.file_path.file_id, file_name=Path(file_path_annotation.text).name)
+        print(f"File saved as {Path(file_path_annotation.text).name}")
+    ```
+
 1. 查找注释 **Clean up** 并添加以下代码，以在不再需要时删除代理和线程。
 
     ```python
@@ -272,12 +253,14 @@ lab:
     ```
 
 1. 使用注释查看代码，了解如何操作：
-    - 将自定义函数集添加到工具集
-    - 创建使用工具集的代理。
-    - 使用来自用户的提示消息运行线程。
+    - 连接到 AI Foundry 项目。
+    - 上传数据文件并创建可访问它的代码解释器工具。
+    - 创建使用代码解释器工具的新代理，并有显式指令，用于分析数据并将图表创建为 .png 文件。
+    - 运行一个线程，其中包含来自用户的提示消息以及要分析的数据。
     - 检查运行状态，以防出现故障
     - 从已完成的线程中检索消息，并显示代理发送的最后一条消息。
     - 显示对话历史记录
+    - 保存生成的每个文件。
     - 删除不再需要的代理和线程。
 
 1. 完成后保存代码文件 (*CTRL+S*)。 还可以关闭代码编辑器 (*CTRL+Q*)；不过，在需要对添加的代码进行任何编辑时，可能需要将其保持打开状态。 在任一情况下，将 Cloud Shell 命令行窗格保持打开状态。
@@ -298,35 +281,46 @@ lab:
 1. 登录后，输入以下命令来运行应用程序：
 
     ```
-   python agent.py
+    python agent.py
     ```
     
     应用程序使用已通过身份验证的 Azure 会话凭据连接到项目，创建并运行代理。
 
-1. 出现提示时，输入提示，例如：
+1. 出现提示时，查看应用从 *data.txt* 文本文件加载的数据。 然后输入提示，例如：
 
     ```
-   I have a technical problem
+   What's the category with the highest cost?
     ```
 
     > **提示**：如果应用因超出速率限制而失败。 等待几秒钟，然后重试。 如果订阅配额不足，模型可能无法响应。
 
-1. 查看响应 代理可能会询问你的电子邮件地址和问题说明。 可以使用任何电子邮件地址（例如 `alex@contoso.com`）和任何问题说明（例如 `my computer won't start`）
+1. 查看响应 然后输入另一个提示，此次请求图表：
 
-    当它有足够的信息时，代理应根据需要选择使用函数。
+    ```
+   Create a pie chart showing cost by category
+    ```
+
+    在这种情况下，代理应根据需要选择性地使用代码解释器工具，以基于请求创建图表。
 
 1. 如果需要，可以继续对话。 线程是*有状态的*，因此会保留对话历史记录，这意味着代理具有每个响应的完整上下文。 完成后，请输入`quit`。
-1. 查看从线程检索到的对话消息和已生成的工单。
-1. 该工具应已将支持工单保存在应用文件夹中。 可以使用 `ls` 命令检查，然后使用 `cat` 命令查看文件内容，如下所示：
+1. 查看从线程检索到的对话消息以及生成的文件。
+
+1. 应用程序完成后，使用 Cloud Shell **下载**命令下载保存在应用文件夹中的每个 .png 文件。 例如：
 
     ```
-   cat ticket-<ticket_num>.txt
+   download ./<file_name>.png
     ```
+
+    下载命令会在浏览器右下角创建弹出链接，可以选择此链接下载并打开文件。
+
+## 总结
+
+在本练习中，已使用 Azure AI 代理服务 SDK 创建使用 AI 代理的客户端应用程序。 代理使用内置的代码解释器工具运行创建映像的动态代码。
 
 ## 清理
 
-完成练习后，应删除已创建的云资源，以避免不必要的资源使用。
+如果已完成对 Azure AI 代理服务的探索，则应删除在本练习中创建的资源，以避免产生不必要的 Azure 成本。
 
-1. 打开 [Azure 门户](https://portal.azure.com)，网址为：`https://portal.azure.com`，并查看在其中部署了本练习中使用的中心资源的资源组内容。
+1. 返回到包含 Azure 门户的浏览器选项卡（或在新的浏览器选项卡中重新打开 [Azure 门户](https://portal.azure.com)，网址为：`https://portal.azure.com`），查看已在其中部署本练习中使用的资源的资源组内容。
 1. 在工具栏中，选择“删除资源组”****。
 1. 输入资源组名称，并确认要删除该资源组。
