@@ -1,12 +1,12 @@
 ---
 lab:
   title: 探索 AI 代理开发
-  description: 通过探索 Azure AI Foundry 门户中的 Azure AI 代理服务工具，迈出开发 AI 代理的第一步。
+  description: 通过探索 Azure AI Foundry 门户中的 Azure AI 代理服务，迈出开发 AI 代理的第一步。
 ---
 
 # 探索 AI 代理开发
 
-在本练习中，你将使用 Azure AI Foundry 门户中的 Azure AI 代理服务工具创建用于回答费用报销问题的简单 AI 代理。
+在本练习中，你将使用 Azure AI Foundry 门户中的 Azure AI 代理服务创建用于协助员工费用报销的简单 AI 代理。
 
 此练习大约需要 **30** 分钟。
 
@@ -72,7 +72,13 @@ lab:
 
     此时，应自动新建名称类似于 *Agent123* 的代理（如果没有，请使用“**+ 新建代理**”按钮创建一个代理）。
 
-1. 选择新建的代理。 然后，在新建代理的“**设置**”窗格中，将“**代理名称**”设置为`ExpensesAgent`，确保选择之前创建的 GPT-4o 模型部署，并将“**指令**”设置为`Answer questions related to expense claims`。
+1. 选择新建的代理。 然后，在新建代理的“**设置**”窗格中，将“**代理名称**”设置为 `ExpensesAgent`，确保选择之前创建的 gpt-4o 模型部署，并将“**指令**”设置为：
+
+    ```prompt
+   You are an AI assistant for corporate expenses.
+   You answer questions about expenses based on the expenses policy data.
+   If a user wants to submit an expense claim, you get their email address, a description of the claim, and the amount to be claimed and write the claim details to a text file that the user can download.
+    ```
 
     ![Azure AI Foundry 门户中 AI 代理设置页的屏幕截图。](./Media/ai-agent-setup.png)
 
@@ -83,20 +89,27 @@ lab:
 
 1. 在“**设置**”窗格的“**知识**”部分中，验证是否已列出 **Expenses_Vector_Store**，并显示包含 1 个文件。
 
-    > **备注**：还可以将**操作**添加到代理以自动执行任务。 在此简单的信息检索代理示例中，无需执行任何操作。
+1. 在“**知识**”部分的“**操作**”旁边，选择“**+ 添加**”。 然后在“**添加操作**”对话框中，选择“**代码解释器**”，然后选择“**保存**”（无需上传代码解释器的任何文件）。
+
+    代理将使用上传的文档作为其知识源来*设置*其响应 （换句话说，它将根据本文档的内容回答问题）。 它将根据需要使用代码解释器工具，通过生成并运行自己的 Python 代码来执行操作。
 
 ## 测试代理
 
 创建代理后，可以在 Azure AI Foundry 门户操场中对其进行测试。
 
 1. 在代理的“**设置**”窗格顶部，选择“**在操场中试用**”。
-1. 在操场中，输入提示`What's the maximum I can claim for meals?`并查看代理的响应 - 这应基于费用政策文档中作为知识添加到代理设置的信息。
-
-    ![Azure AI Foundry 门户中代理操场的屏幕截图。](./Media/ai-agent-playground.png)
+1. 在操场中，输入提示：`What's the maximum I can claim for meals?` 并查看代理的响应 - 这应基于费用政策文档中作为知识添加到代理设置的信息。
 
     > **备注**：如果代理因超出速率限制而无法响应。 等待几秒钟，然后重试。 如果订阅配额不足，模型可能无法响应。
 
-1. 尝试跟进问题，例如`What about accommodation?`并查看回复。
+1. 尝试以下跟进提示：`I'd like to submit a claim for a meal.` 并查看响应。 代理应要求你提供提交报销所需的信息。
+1. 向代理提供电子邮件地址；例如， `fred@contoso.com`。 代理应确认响应并请求费用报销所需的剩余信息（说明和金额）
+1. 提交描述报销和金额的提示；例如， `Breakfast cost me $20`。
+1. 代理应使用代码解释器来准备费用报销文本文件，并提供一个链接供你下载。
+
+    ![Azure AI Foundry 门户中代理操场的屏幕截图。](./Media/ai-agent-playground.png)
+
+1. 下载并打开文本文档以查看费用报销详细信息。
 
 ## 清理
 
