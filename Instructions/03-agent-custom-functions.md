@@ -22,47 +22,30 @@ lab:
 
     ![Azure AI Foundry 门户的屏幕截图。](./Media/ai-foundry-home.png)
 
-1. 在主页中，选择“**+ 创建项目**”。
-1. 在**创建项目**向导中，输入项目的有效名，如果出现建议使用现有中心的提示，请选择新建中心的选项。 然后查看将自动创建的 Azure 资源以支持中心和项目。
-1. 选择“**自定义**”并为中心指定以下设置：
-    - **中心名称**：*中心的有效名称*
+1. 在主页中，选择“**创建代理**”。
+1. 当提示创建项目时，输入项目的有效名称并展开“**高级选项**”。
+1. 为项目确认以下设置：
+    - **Azure AI Foundry 资源**：*Azure AI Foundry 资源的有效名称*
     - **订阅**：Azure 订阅
     - **资源组**：*创建或选择资源组*
-    - **位置**：选择以下任一区域：\*
-        - eastus
-        - eastus2
-        - swedencentral
-        - westus
-        - westus3
-    - **连接 Azure AI 服务或 Azure OpenAI**：*新建 AI 服务资源*
-    - **连接 Azure AI 搜索**：跳过连接
+    - **区域**：*选择任何**支持 AI 服务的位置***\*
 
-    > \* 编写时，这些区域支持 gpt-4o 模型用于代理。 模型可用性受区域配额的约束。 如果稍后在练习中达到配额限制，可能需要在不同的区域中创建另一个资源。
+    > \* 某些 Azure AI 资源受区域模型配额约束。 如果稍后在练习中达到配额限制，你可能需要在不同的区域中创建另一个资源。
 
-1. 选择“**下一步**”查看配置。 然后，选择“**创建**”并等待该进程完成。
-1. 创建项目后，关闭显示的所有使用技巧，并查看 Azure AI Foundry 门户中的项目页面，如下图所示：
+1. 选择“**创建**”并等待创建项目。
+1. 创建项目后，代理操场将自动打开，以便可以选择或部署模型：
 
-    ![Azure AI Foundry 门户中 Azure AI 项目详细信息的屏幕截图。](./Media/ai-foundry-project.png)
+    ![Azure AI Foundry 项目代理操场的屏幕截图。](./Media/ai-foundry-agents-playground.png)
 
-## 部署生成式 AI 模型
+    >**备注**：创建代理和项目时，会自动部署 GPT-4o 基本模型。
 
-现在，可随时部署生成式 AI 语言模型以支持代理。
+1. 在左侧导航窗格中，选择“**概述**”以查看项目的主页；如下所示：
 
-1. 在项目左侧窗格的“**我的资产**”部分中，选择“**模型 + 终结点**”页。
-1. 在“**模型 + 终结点**”页的“**模型部署**”选项卡中，在“**+ 部署模型**”菜单中，选择“**部署基础模型**”。
-1. 在列表中搜索 **gpt-4o** 模型，然后选择并确认。
-1. 在部署详细信息中选择“**自定义**”，并使用以下设置部署模型：
-    - **部署名**：*有效的模型部署名*
-    - **部署类型**：全局标准
-    - **自动版本更新**：启用
-    - **模型版本**：*选择最新可用版本*
-    - **连接的 AI 资源**：*选择 Azure OpenAI 资源连接*
-    - **每分钟令牌限制（千令牌）**：50K *（或如果订阅的可用上限低于 50K，则以其为准）*
-    - **内容筛选器**：DefaultV2
+    > **备注**：如果显示“*权限不足*”*错误，请使用“**修复我**”按钮解决此问题。
 
-    > **注意**：减少 TPM 有助于避免过度使用正在使用的订阅中可用的配额。 50,000 TPM 足以应对本练习所需的数据处理量。 如果可用配额低于上述 50,000 TPM，你仍然可完成本练习，但超过速率限制时可能需要等待并重新提交提示。
+    ![Azure AI Foundry 项目概述页面的屏幕截图。](./Media/ai-foundry-project.png)
 
-1. 等待部署完成。
+1. 将 **Azure AI Foundry 项目终结点**值复制到记事本，因为你将使用它连接到客户端应用程序中的项目。
 
 ## 开发使用函数工具的代理
 
@@ -109,7 +92,7 @@ lab:
     ```
    python -m venv labenv
    ./labenv/bin/Activate.ps1
-   pip install python-dotenv azure-identity azure-ai-projects
+   pip install -r requirements.txt azure-ai-projects
     ```
 
     >**备注：** 可以忽略库安装过程中显示的任何警告或错误消息。
@@ -122,7 +105,7 @@ lab:
 
     该文件已在代码编辑器中打开。
 
-1. 在代码文件中，将 **your_project_connection_string** 占位符替换为项目的连接字符串（从 Azure AI Foundry 门户中的项目“**概述**”页复制），并将 **your_model_deployment** 占位符替换为分配给 gpt-4o 模型部署的名称。
+1. 在代码文件中，将 **your_project_endpoint** 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“**概述**”页复制）。
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
 ### 定义自定义函数
@@ -175,22 +158,22 @@ lab:
     ```python
    # Add references
    from azure.identity import DefaultAzureCredential
-   from azure.ai.projects import AIProjectClient
-   from azure.ai.projects.models import FunctionTool, ToolSet
+   from azure.ai.agents import AgentsClient
+   from azure.ai.agents.models import FunctionTool, ToolSet, ListSortOrder
    from user_functions import user_functions
     ```
 
-1. 查找注释 **Connect to the Azure AI Foundry project**，然后添加以下代码，以使用当前 Azure 凭据连接到 Azure AI Foundry 项目。
+1. 查找注释 **Connect to the Agent client**，然后添加以下代码，以使用当前 Azure 凭据连接到 Azure AI 项目。
 
     > **提示**：注意保持正确缩进级别。
 
     ```python
-   # Connect to the Azure AI Foundry project
-   project_client = AIProjectClient.from_connection_string(
-        credential=DefaultAzureCredential
-            (exclude_environment_credential=True,
-             exclude_managed_identity_credential=True),
-        conn_str=PROJECT_CONNECTION_STRING
+   # Connect to the Agent client
+   agent_client = AgentsClient(
+       endpoint=project_endpoint,
+       credential=DefaultAzureCredential
+           (exclude_environment_credential=True,
+            exclude_managed_identity_credential=True)
    )
     ```
     
@@ -198,14 +181,15 @@ lab:
 
     ```python
    # Define an agent that can use the custom functions
-   with project_client:
+   with agent_client:
 
         functions = FunctionTool(user_functions)
         toolset = ToolSet()
         toolset.add(functions)
+        agent_client.enable_auto_function_calls(toolset)
             
-        agent = project_client.agents.create_agent(
-            model=MODEL_DEPLOYMENT,
+        agent = agent_client.create_agent(
+            model=model_deployment,
             name="support-agent",
             instructions="""You are a technical support agent.
                             When a user has a technical issue, you get their email address and a description of the issue.
@@ -215,7 +199,7 @@ lab:
             toolset=toolset
         )
 
-        thread = project_client.agents.create_thread()
+        thread = agent_client.threads.create()
         print(f"You're chatting with: {agent.name} ({agent.id})")
 
     ```
@@ -224,15 +208,15 @@ lab:
 
     ```python
    # Send a prompt to the agent
-   message = project_client.agents.create_message(
+   message = agent_client.messages.create(
         thread_id=thread.id,
         role="user",
         content=user_prompt
    )
-   run = project_client.agents.create_and_process_run(thread_id=thread.id, agent_id=agent.id)
+   run = agent_client.runs.create_and_process(thread_id=thread.id, agent_id=agent.id)
     ```
 
-    > **备注**：使用 **create_and_process_run** 方法运行线程使代理能够自动查找函数，并根据函数名称和参数选择使用它们。 作为替代方法，可以使用 **create_run** 方法，在这种情况下，你将负责编写代码来轮询运行状态以确定何时需要函数调用、调用函数并将结果返回到代理。
+    > **备注**：使用 **create_and_process** 方法运行线程使代理能够自动查找函数，并根据函数名称和参数选择使用它们。 作为替代方法，可以使用 **create_run** 方法，在这种情况下，你将负责编写代码来轮询运行状态以确定何时需要函数调用、调用函数并将结果返回到代理。
 
 1. 查找注释 **Check the run status for failures** 并添加以下代码，以显示发生的任何错误。
 
@@ -246,29 +230,32 @@ lab:
 
     ```python
    # Show the latest response from the agent
-   messages = project_client.agents.list_messages(thread_id=thread.id)
-   last_msg = messages.get_last_text_message_by_role("assistant")
+   last_msg = agent_client.messages.get_last_message_text_by_role(
+       thread_id=thread.id,
+       role=MessageRole.AGENT,
+   )
    if last_msg:
         print(f"Last Message: {last_msg.text.value}")
     ```
 
-1. 查找注释 **Get the conversation history** （循环结束后），并添加以下代码以输出对话线程中的消息；反转顺序以按时间顺序显示它们
+1. 查找注释 **Get the conversation history**，并添加以下代码以输出对话线程中的消息；反转顺序以按时间顺序显示它们
 
     ```python
    # Get the conversation history
    print("\nConversation Log:\n")
-   messages = project_client.agents.list_messages(thread_id=thread.id)
-   for message_data in reversed(messages.data):
-        last_message_content = message_data.content[-1]
-        print(f"{message_data.role}: {last_message_content.text.value}\n")
+   messages = agent_client.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
+   for message in messages:
+       if message.text_messages:
+           last_msg = message.text_messages[-1]
+           print(f"{message.role}: {last_msg.text.value}\n")
     ```
 
 1. 查找注释 **Clean up** 并添加以下代码，以在不再需要时删除代理和线程。
 
     ```python
    # Clean up
-   project_client.agents.delete_agent(agent.id)
-   project_client.agents.delete_thread(thread.id)
+   agent_client.delete_agent(agent.id)
+   print("Deleted agent")
     ```
 
 1. 使用注释查看代码，了解如何操作：
