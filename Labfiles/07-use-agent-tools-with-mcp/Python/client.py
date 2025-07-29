@@ -13,8 +13,8 @@ model_deployment = os.getenv("MODEL_DEPLOYMENT_NAME")
 
 
 # MCP server configuration
-mcp_server_url = "https://gitmcp.io/Azure/azure-rest-api-specs"
-mcp_server_label = "github"
+mcp_server_url = "https://learn.microsoft.com/api/mcp"
+mcp_server_label = "mslearn"
 
 # Initialize agent MCP tool
 
