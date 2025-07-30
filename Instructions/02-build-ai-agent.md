@@ -6,7 +6,9 @@ lab:
 
 # 部署 AI 代理
 
-在本练习中，你将使用 Azure AI 代理服务创建一个简单的代理来分析数据和创建图表。 代理使用内置 *代码解释器* 工具动态生成创建图表所需的代码作为图像，然后保存生成的图表图像。
+在本练习中，你将使用 Azure AI 代理服务创建一个简单的代理来分析数据和创建图表。 智能体可以使用内置代码解释器** 工具，动态生成分析数据所需的任何代码。
+
+> **提示**：本练习中使用的代码基于适用于 Python 的 Azure AI Foundry SDK。 可以使用适用于 Microsoft .NET、JavaScript 和 Java 的 SDK 开发类似的解决方案。 有关详细信息，请参阅 [Azure AI Foundry SDK 客户端库](https://learn.microsoft.com/azure/ai-foundry/how-to/develop/sdk-overview)。
 
 完成此练习大约需要 30 分钟。
 
@@ -31,15 +33,13 @@ lab:
     > \* 某些 Azure AI 资源受区域模型配额约束。 如果稍后在练习中达到配额限制，你可能需要在不同的区域中创建另一个资源。
 
 1. 选择“**创建**”并等待创建项目。
-1. 创建项目后，代理操场将自动打开，以便可以选择或部署模型：
+1. 如果出现提示，请使用“全局标准”或“标准”部署选项（具体取决于配额可用性）部署 gpt-4o 模型。********
 
-    ![Azure AI Foundry 项目代理操场的屏幕截图。](./Media/ai-foundry-agents-playground.png)
+    >**注意**：如果配额可用，则在创建智能体和项目时，可能会自动部署 GPT-4o 基础模型。
 
-    >**备注**：创建代理和项目时，会自动部署 GPT-4o 基本模型。
+1. 项目创建完成后，会打开“智能体”操场。
 
 1. 在左侧导航窗格中，选择“**概述**”以查看项目的主页；如下所示：
-
-    > **备注**：如果显示“*权限不足*”*错误，请使用“**修复我**”按钮解决此问题。
 
     ![Azure AI Foundry 项目概述页面的屏幕截图。](./Media/ai-foundry-project.png)
 
@@ -101,7 +101,7 @@ lab:
 
     该文件已在代码编辑器中打开。
 
-1. 在代码文件中，将 **your_project_endpoint** 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“**概述**”页复制）。
+1. 在代码文件中，将 your_project_endpoint**** 占位符替换为项目的终结点（从 Azure AI Foundry 门户的项目“概述”**** 页复制），并确保将 MODEL_DEPLOYMENT_NAME 变量设置为模型部署名称（应为 gpt-4o**）。
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
 ### 为代理应用编写代码
@@ -160,7 +160,7 @@ lab:
    agent = agent_client.create_agent(
         model=model_deployment,
         name="data-agent",
-        instructions="You are an AI agent that analyzes the data in the file that has been uploaded. If the user requests a chart, create it and save it as a .png file.",
+        instructions="You are an AI agent that analyzes the data in the file that has been uploaded. Use Python to calculate statistical metrics as necessary.",
         tools=code_interpreter.definitions,
         tool_resources=code_interpreter.resources,
    )
@@ -221,19 +221,6 @@ lab:
            print(f"{message.role}: {last_msg.text.value}\n")
     ```
 
-1. 查找注释 **Get any generated files** 并添加以下代码，以便从消息（这指示代理在其内部存储中保存了文件）获取任何文件路径批注，并将文件复制到应用文件夹。 _备注_：当前图像内容不可供系统使用。
-
-    ```python
-   # Get any generated files
-   for msg in messages:
-       # Save every image file in the message
-       for img in msg.image_contents:
-           file_id = img.image_file.file_id
-           file_name = f"{file_id}_image_file.png"
-           agent_client.files.save(file_id=file_id, file_name=file_name)
-           print(f"Saved image file to: {Path.cwd() / file_name}")
-    ```
-
 1. 查找注释 **Clean up** 并添加以下代码，以在不再需要时删除代理和线程。
 
     ```python
@@ -244,12 +231,11 @@ lab:
 1. 使用注释查看代码，了解如何操作：
     - 连接到 AI Foundry 项目。
     - 上传数据文件并创建可访问它的代码解释器工具。
-    - 创建使用代码解释器工具的新代理，并有显式指令，用于分析数据并将图表创建为 .png 文件。
+    - 创建一个新智能体，该智能体使用代码解释器工具，并明确指示在进行统计分析时根据需要使用 Python。
     - 运行一个线程，其中包含来自用户的提示消息以及要分析的数据。
     - 检查运行状态，以防出现故障
     - 从已完成的线程中检索消息，并显示代理发送的最后一条消息。
     - 显示对话历史记录
-    - 保存生成的每个文件。
     - 删除不再需要的代理和线程。
 
 1. 完成后保存代码文件 (*CTRL+S*)。 还可以关闭代码编辑器 (*CTRL+Q*)；不过，在需要对添加的代码进行任何编辑时，可能需要将其保持打开状态。 在任一情况下，将 Cloud Shell 命令行窗格保持打开状态。
@@ -283,28 +269,26 @@ lab:
 
     > **提示**：如果应用因超出速率限制而失败。 等待几秒钟，然后重试。 如果订阅配额不足，模型可能无法响应。
 
-1. 查看响应 然后输入另一个提示，此次请求图表：
+1. 查看响应 然后输入另一个提示，这次请求生成可视化效果：
 
     ```
-   Create a pie chart showing cost by category
+   Create a text-based bar chart showing cost by category
     ```
 
-    在这种情况下，代理应根据需要选择性地使用代码解释器工具，以基于请求创建图表。
+1. 查看响应 接着再输入另一个提示，这次请求一个统计指标：
+
+    ```
+   What's the standard deviation of cost?
+    ```
+
+    查看响应
 
 1. 如果需要，可以继续对话。 线程是*有状态的*，因此会保留对话历史记录，这意味着代理具有每个响应的完整上下文。 完成后，请输入`quit`。
-1. 查看从线程检索到的对话消息以及生成的文件。
-
-1. 应用程序完成后，使用 Cloud Shell **下载**命令下载保存在应用文件夹中的每个 .png 文件。 例如：
-
-    ```
-   download ./<file_name>.png
-    ```
-
-    下载命令会在浏览器右下角创建弹出链接，可以选择此链接下载并打开文件。
+1. 查看从线程检索到的会话消息，其中可能包括智能体在使用代码解释器工具时为解释其操作步骤而生成的消息。
 
 ## 总结
 
-在本练习中，已使用 Azure AI 代理服务 SDK 创建使用 AI 代理的客户端应用程序。 代理使用内置的代码解释器工具运行创建映像的动态代码。
+在本练习中，已使用 Azure AI 代理服务 SDK 创建使用 AI 代理的客户端应用程序。 智能体可以使用内置的代码解释器工具运行动态 Python 代码，以执行统计分析。
 
 ## 清理
 

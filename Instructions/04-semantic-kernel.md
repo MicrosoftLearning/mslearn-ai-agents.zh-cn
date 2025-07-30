@@ -8,6 +8,8 @@ lab:
 
 在本练习中，你将使用 Azure AI 代理服务和语义内核创建一个处理报销申请的 AI 代理。
 
+> **提示**：本练习中使用的代码基于适用于 Python 的 Semantic Kernel SDK。 可以使用适用于 Microsoft .NET 和 Java 的 SDK 开发类似解决方案。 有关详细信息，请参阅[支持的语义内核语言](https://learn.microsoft.com/semantic-kernel/get-started/supported-languages)。
+
 完成此练习大约需要 30 分钟。
 
 > **注意**：本练习中使用的一些技术处于预览版或积极开发阶段。 可能会遇到一些意想不到的行为、警告或错误。
@@ -35,8 +37,6 @@ lab:
 1. 创建项目后，将自动打开聊天操场。
 1. 在“**设置**”窗格中，记下模型部署的名称；应为 **gpt-4o**。 可以通过在“**模型和终结点**”页中查看部署来确认这一点（只需在左侧导航窗格中打开该页）。
 1. 在左侧导航窗格中，选择“**概述**”以查看项目的主页；如下所示：
-
-    > **备注**：如果显示“*权限不足*”*错误，请使用“**修复我**”按钮解决此问题。
 
     ![Azure AI Foundry 门户中 Azure AI 项目详细信息的屏幕截图。](./Media/ai-foundry-project.png)
 
@@ -85,10 +85,10 @@ lab:
     ```
    python -m venv labenv
    ./labenv/bin/Activate.ps1
-   pip install python-dotenv azure-identity semantic-kernel[azure] 
+   pip install python-dotenv azure-identity semantic-kernel --upgrade 
     ```
 
-    > **备注**：安装 *semantic-kernel[azure]* 会自动安装与语义内核兼容的 *azure-ai-projects* 版本。
+    > **注意**：安装语义内核时，会自动安装与语义内核兼容的 azure-ai-projects 版本。****
 
 1. 输入以下命令以编辑已提供的配置文件：
 
@@ -207,12 +207,14 @@ lab:
 
     ```python
    # Use the agent to process the expenses data
-   thread: AzureAIAgentThread = AzureAIAgentThread(client=project_client)
+   # If no thread is provided, a new thread will be
+   # created and returned with the initial response
+   thread: AzureAIAgentThread | None = None
    try:
         # Add the input prompt to a list of messages to be submitted
         prompt_messages = [f"{prompt}: {expenses_data}"]
         # Invoke the agent for the specified thread with the messages
-        response = await expenses_agent.get_response(thread_id=thread.id, messages=prompt_messages)
+        response = await expenses_agent.get_response(prompt_messages, thread=thread)
         # Display the response
         print(f"\n# {response.name}:\n{response}")
    except Exception as e:
