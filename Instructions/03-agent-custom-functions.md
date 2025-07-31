@@ -6,9 +6,9 @@ lab:
 
 # 在 AI 代理中使用自定义函数
 
-在本练习中，你将探索如何创建可以使用自定义函数作为工具完成任务的代理。
+在本练习中，你将探索如何创建可以使用自定义函数作为工具完成任务的代理。 你将生成简单的技术支持代理，以收集技术问题的详细信息并生成支持工单。
 
-你将生成简单的技术支持代理，以收集技术问题的详细信息并生成支持工单。
+> **提示**：本练习中使用的代码基于适用于 Python 的 Azure AI Foundry SDK。 可以使用适用于 Microsoft .NET、JavaScript 和 Java 的 SDK 开发类似的解决方案。 有关详细信息，请参阅 [Azure AI Foundry SDK 客户端库](https://learn.microsoft.com/azure/ai-foundry/how-to/develop/sdk-overview)。
 
 完成此练习大约需要 30 分钟。
 
@@ -33,19 +33,17 @@ lab:
     > \* 某些 Azure AI 资源受区域模型配额约束。 如果稍后在练习中达到配额限制，你可能需要在不同的区域中创建另一个资源。
 
 1. 选择“**创建**”并等待创建项目。
-1. 创建项目后，代理操场将自动打开，以便可以选择或部署模型：
+1. 如果出现提示，请使用“全局标准”或“标准”部署选项（具体取决于配额可用性）部署 gpt-4o 模型。********
 
-    ![Azure AI Foundry 项目代理操场的屏幕截图。](./Media/ai-foundry-agents-playground.png)
+    >**注意**：如果配额可用，则在创建智能体和项目时，可能会自动部署 GPT-4o 基础模型。
 
-    >**备注**：创建代理和项目时，会自动部署 GPT-4o 基本模型。
+1. 项目创建完成后，会打开“智能体”操场。
 
 1. 在左侧导航窗格中，选择“**概述**”以查看项目的主页；如下所示：
 
-    > **备注**：如果显示“*权限不足*”*错误，请使用“**修复我**”按钮解决此问题。
-
     ![Azure AI Foundry 项目概述页面的屏幕截图。](./Media/ai-foundry-project.png)
 
-1. 将 **Azure AI Foundry 项目终结点**值复制到记事本，因为你将使用它连接到客户端应用程序中的项目。
+1. 将 **Azure AI Foundry 项目终结点**值复制到记事本，因为你将使用它们连接到客户端应用程序中的项目。
 
 ## 开发使用函数工具的代理
 
@@ -105,7 +103,7 @@ lab:
 
     该文件已在代码编辑器中打开。
 
-1. 在代码文件中，将 **your_project_endpoint** 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“**概述**”页复制）。
+1. 在代码文件中，将 your_project_endpoint**** 占位符替换为项目的终结点（从 Azure AI Foundry 门户的项目“概述”**** 页复制），并确保将 MODEL_DEPLOYMENT_NAME 变量设置为模型部署名称（应为 gpt-4o**）。
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
 ### 定义自定义函数
@@ -245,7 +243,7 @@ lab:
    print("\nConversation Log:\n")
    messages = agent_client.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
    for message in messages:
-       if message.text_messages:
+        if message.text_messages:
            last_msg = message.text_messages[-1]
            print(f"{message.role}: {last_msg.text.value}\n")
     ```
