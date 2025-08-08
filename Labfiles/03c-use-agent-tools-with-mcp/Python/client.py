@@ -22,7 +22,7 @@ mcp_server_label = "mslearn"
 # Create agent with MCP tool and process agent run
 with agents_client:
 
-    # Create a new agent with the mcp tool definitions
+    # Create a new agent
     
 
     # Log info
@@ -33,12 +33,6 @@ with agents_client:
     
 
     # Create a message on the thread
-    
-
-    # Update mcp tool headers
-   
-
-    # Set approval mode
     
 
     # Create and process agent run in thread with MCP tools
