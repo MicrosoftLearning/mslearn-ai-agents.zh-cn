@@ -63,7 +63,7 @@ with agents_client:
         print()  # add an extra newline between steps
 
     # Fetch and log all messages
-    messages = agents_client.messages.list(thread_id=thread.id)
+    messages = agents_client.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
     print("\nConversation:")
     print("-" * 50)
     for msg in messages:
