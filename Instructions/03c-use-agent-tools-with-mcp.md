@@ -28,7 +28,13 @@ lab:
     - **Azure AI Foundry 资源**：*Azure AI Foundry 资源的有效名称*
     - **订阅**：Azure 订阅
     - **资源组**：*创建或选择资源组*
-    - **区域**：*选择任何**支持 AI 服务的位置***\*
+    - 区域****：选择以下任何受支持的位置：**\*
+      * 美国西部 2
+      * 美国西部
+      * 挪威东部
+      * 瑞士北部
+      * 阿拉伯联合酋长国北部
+      * 印度南部
 
     > \* 某些 Azure AI 资源受区域模型配额约束。 如果稍后在练习中达到配额限制，你可能需要在不同的区域中创建另一个资源。
 
@@ -43,7 +49,7 @@ lab:
 
     ![Azure AI Foundry 项目概述页面的屏幕截图。](./Media/ai-foundry-project.png)
 
-1. 将 **Azure AI Foundry 项目终结点**值复制到记事本，因为你将使用它连接到客户端应用程序中的项目。
+1. 复制“Azure AI Foundry 项目终结点”**** 值。 你将会使用它连接到客户端应用程序中的项目。
 
 ## 开发使用 MCP 函数工具的智能体
 
@@ -109,13 +115,21 @@ lab:
 
 在此任务中，你将连接到远程 MCP 服务器、准备 AI 智能体，并运行用户提示。
 
+1. 输入以下命令以编辑已提供的代码文件：
+
+    ```
+   code client.py
+    ```
+
+    该文件已在代码编辑器中打开。
+
 1. 找到注释“添加引用”****，并添加以下代码以导入类：
 
     ```python
    # Add references
    from azure.identity import DefaultAzureCredential
    from azure.ai.agents import AgentsClient
-   from azure.ai.agents.models import McpTool
+   from azure.ai.agents.models import McpTool, ToolSet, ListSortOrder
     ```
 
 1. 找到注释“连接到智能体客户端”****，并添加以下代码，通过当前的 Azure 凭据连接到 Azure AI 项目。
@@ -136,25 +150,29 @@ lab:
     ```python
    # Initialize agent MCP tool
    mcp_tool = McpTool(
-       server_label=mcp_server_label,
-       server_url=mcp_server_url,
+        server_label=mcp_server_label,
+        server_url=mcp_server_url,
    )
+    
+   mcp_tool.set_approval_mode("never")
+    
+   toolset = ToolSet()
+   toolset.add(mcp_tool)
     ```
 
     此代码将连接到 Microsft Learn Docs 远程 MCP 服务器。 这是一项云托管服务，使客户端能够直接从 Microsoft 官方文档中获取可信且最新的信息。
 
-1. 在“使用 MCP 工具定义创建新智能体”注释下方，添加以下代码：****
+1. 在注释“创建新代理”**** 下，添加以下代码：
 
     ```python
-   # Create a new agent with the mcp tool definitions
+   # Create a new agent
    agent = agents_client.create_agent(
-       model=model_deployment,
-       name="my-mcp-agent",
-       instructions="""
+        model=model_deployment,
+        name="my-mcp-agent",
+        instructions="""
         You have access to an MCP server called `microsoft.docs.mcp` - this tool allows you to 
         search through Microsoft's latest official documentation. Use the available MCP tools 
-        to answer questions and perform tasks.""",
-       tools=mcp_tool.definitions,
+        to answer questions and perform tasks."""
    )
     ```
 
@@ -172,33 +190,20 @@ lab:
 
     ```python
    # Create a message on the thread
+   prompt = input("\nHow can I help?: ")
    message = agents_client.messages.create(
-       thread_id=thread.id,
-       role="user",
-       content="Give me the Azure CLI commands to create an Azure Container App with a managed identity.",
+        thread_id=thread.id,
+        role="user",
+        content=prompt,
    )
    print(f"Created message, ID: {message.id}")
     ```
 
-1. 在“更新 MCP 工具标头”注释下方，添加以下代码：****
-
-    ```python
-   # Update mcp tool headers
-   mcp_tool.update_headers("SuperSecret", "123456")
-    ```
-
-1. 找到“设置审批模式”注释并添加以下代码：****
-
-    ```python
-   # Set approval mode
-   mcp_tool.set_approval_mode("never")
-    ```
-
-1. 找到“使用 MCP 工具在线程中创建和处理智能体运行”注释，并添加以下代码：****
+1. 找到注释“使用 MCP 工具在线程中创建和处理代理运行”，并添加以下代码：****
 
     ```python
    # Create and process agent run in thread with MCP tools
-   run = agents_client.runs.create_and_process(thread_id=thread.id, agent_id=agent.id, tool_resources=mcp_tool.resources)
+   run = agents_client.runs.create_and_process(thread_id=thread.id, agent_id=agent.id, toolset=toolset)
    print(f"Created run, ID: {run.id}")
     ```
     
@@ -226,7 +231,13 @@ lab:
    python client.py
     ```
 
-    部分输出如下所示：
+1. 出现提示时，输入有关技术信息的请求，例如：
+
+    ```
+    Give me the Azure CLI commands to create an Azure Container App with a managed identity.
+    ```
+
+1. 等待代理处理提示，使用 MCP 服务器查找合适的工具来检索请求的信息。 应会看到类似于下面的信息：
 
     ```
     Created agent, ID: <<agent-id>>
@@ -251,25 +262,28 @@ lab:
     ---
 
     ### **1. Create a Resource Group**
-    ```azurecli
+    '''azurecli
     az group create --name myResourceGroup --location eastus
-    ```
+    '''
+    
 
     {{continued...}}
 
-    通过遵循这些步骤，你可以部署一个带有系统分配或用户分配的托管标识的 Azure 容器应用，实现与其他 Azure 服务的无缝集成。
+    By following these steps, you can deploy an Azure Container App with either system-assigned or user-assigned managed identities to integrate seamlessly with other Azure services.
     --------------------------------------------------
-    USER：向我提供 Azure CLI 命令，以创建具有托管标识的 Azure 容器应用。
+    USER: Give me the Azure CLI commands to create an Azure Container App with a managed identity.
     --------------------------------------------------
-    已删除的智能体
+    Deleted agent
     ```
 
-    Notice that the agent was able to invoke the MCP tool `microsoft_docs_search` automatically to fulfill the request.
+    请注意，代理能够自动调用 MCP 工具 `microsoft_docs_search` 来满足请求。
 
-## Clean up
+1. 可以再次（使用命令 `python client.py`）运行应用，请求不同的信息，在每种情况下，代理将尝试使用 MCP 工具查找技术文档。
 
-Now that you've finished the exercise, you should delete the cloud resources you've created to avoid unnecessary resource usage.
+## 清理
 
-1. Open the [Azure portal](https://portal.azure.com) at `https://portal.azure.com` and view the contents of the resource group where you deployed the hub resources used in this exercise.
-1. On the toolbar, select **Delete resource group**.
-1. Enter the resource group name and confirm that you want to delete it.
+完成练习后，应删除已创建的云资源，以避免不必要的资源使用。
+
+1. 打开 [Azure 门户](https://portal.azure.com)，网址为：`https://portal.azure.com`，并查看在其中部署了本练习中使用的中心资源的资源组内容。
+1. 在工具栏中，选择“删除资源组”****。
+1. 输入资源组名称，并确认要删除该资源组。

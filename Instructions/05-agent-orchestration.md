@@ -6,9 +6,13 @@ lab:
 
 # 开发多代理解决方案
 
-在本练习中，你将创建一个项目，使用语义内核 SDK 协调两个 AI 代理。 *事件管理器*代理将分析服务日志文件中的问题。 如果发现问题，事件管理器将推荐解决方案操作，*DevOps 助手*代理将收到建议并调用纠正函数并执行解决方法。 然后，事件管理器代理将查看更新的日志，以确保解决方案成功。
+在本练习中，你将在语义内核 SDK 中练习使用顺序式业务流程模式。 你将创建一个简单的管道，其中包含三个代理，共同处理客户反馈并建议后续步骤。 你将创建以下代理：
 
-在本练习中，提供了四个示例日志文件。 “DevOps 助手”代理代码仅使用一些示例日志消息更新示例日志文件。
+- “摘要生成器”代理会将原始反馈浓缩为简短、中立的语句。
+- “分类器”代理会将反馈归类为“正面”、“负面”或“功能”请求。
+- 最后，“建议的操作”代理会推荐适当的后续步骤。
+
+你将了解如何使用语义内核 SDK 将问题拆解，分配给合适的代理，并生成可执行的结果。 现在就开始吧！
 
 > **提示**：本练习中使用的代码基于适用于 Python 的 Semantic Kernel SDK。 可以使用适用于 Microsoft .NET 和 Java 的 SDK 开发类似解决方案。 有关详细信息，请参阅[支持的语义内核语言](https://learn.microsoft.com/semantic-kernel/get-started/supported-languages)。
 
@@ -31,20 +35,15 @@ lab:
     - **Azure AI Foundry 资源**：*Azure AI Foundry 资源的有效名称*
     - **订阅**：Azure 订阅
     - **资源组**：*创建或选择资源组*
-    - **区域**：*选择任何**支持 AI 服务的位置***\*
+    - **区域**：选择推荐的任何 AI Foundry******\*
 
     > \* 某些 Azure AI 资源受区域模型配额约束。 如果稍后在练习中达到配额限制，你可能需要在不同的区域中创建另一个资源。
 
 1. 选择“**创建**”并等待项目（包括所选的 gpt-4 模型部署）创建。
+
 1. 创建项目后，将自动打开聊天操场。
 
-    > **备注**：对于本练习，此模型的默认 TPM 设置可能太低。 减少 TPM 有助于避免过度使用正在使用的订阅中可用的配额。 
-
 1. 在左侧导航窗格中，选择“**模型和终结点**”，然后选择 **gpt-4o** 部署。
-
-1. 选择“**编辑**”，然后增加“**每分钟令牌速率限制**”
-
-   > **备注**：40,000 TPM 足以应对本练习使用的数据。 如果可用配额低于上述 50,000 TPM，你仍然可完成本练习，但超过速率限制时可能需要等待并重新提交提示。
 
 1. 在“**设置**”窗格中，记下模型部署的名称；应为 **gpt-4o**。 可以通过在“**模型和终结点**”页中查看部署来确认这一点（只需在左侧导航窗格中打开该页）。
 1. 在左侧导航窗格中，选择“**概述**”以查看项目的主页；如下所示：
@@ -109,7 +108,7 @@ lab:
 
     该文件已在代码编辑器中打开。
 
-1. 在代码文件中，将 **your_project_endpoint** 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“**概述**”页复制而来），并将 **your_model_deployment** 占位符替换为 分配给 gpt-4 模型部署的名称。
+1. 在代码文件中，将 your_openai_endpoint**** 占位符替换为项目的 Azure Open AI 终结点（从 Azure AI Foundry 门户中的项目“概述”**** 页的 Azure OpenAI**** 下复制）。 将 your_openai_api_key**** 替换为项目的 API 密钥，并确保 MODEL_DEPLOYMENT_NAME 变量设置为模型部署名称（应为 gpt-4o**）。
 
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
@@ -117,157 +116,141 @@ lab:
 
 现在，你已准备好为多代理解决方案创建代理！ 现在就开始吧！
 
-1. 输入以下命令以编辑 **agent_chat.py** 文件：
+1. 输入以下命令以编辑 agents.py**** 文件：
 
     ```
-   code agent_chat.py
+   code agents.py
     ```
 
-1. 查看文件中的代码，注意其中包含：
-    - 定义两个代理的名称和指令的常量。
-    - **main** 函数，用于添加实现多代理解决方案的大部分代码。
-    - **SelectionStrategy** 类，用于实现确定每个回合对话中应选择哪个代理所需的逻辑。
-    - **ApprovalTerminationStrategy** 类，用于实现确定会话结束时间所需的逻辑。
-    - **DevopsPlugin** 类，包含用于执行 DevOps 操作的函数。
-    - **LogFilePlugin** 类，包含用于读取和写入日志文件的函数。
-
-    首先，你将创建 *事件管理器* 代理，该代理将分析服务日志文件、识别潜在问题，并在必要时建议解决操作或升级问题。
-
-1. 记下 **INCIDENT_MANAGER_INSTRUCTIONS** 字符串。 这些是代理的说明。
-
-1. 在 **main** 函数中，查找注释 **Create the incident manager agent on the Azure AI agent service**，并添加以下代码以创建 Azure AI 代理。
+1. 在文件顶部的注释“添加首选项”**** 下，添加以下代码，以引用实现代理所需的库中的命名空间：
 
     ```python
-   # Create the incident manager agent on the Azure AI agent service
-   incident_agent_definition = await client.agents.create_agent(
-        model=ai_agent_settings.model_deployment_name,
-        name=INCIDENT_MANAGER,
-        instructions=INCIDENT_MANAGER_INSTRUCTIONS
+   # Add references
+   import asyncio
+   from semantic_kernel.agents import Agent, ChatCompletionAgent, SequentialOrchestration
+   from semantic_kernel.agents.runtime import InProcessRuntime
+   from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
+   from semantic_kernel.contents import ChatMessageContent
+    ```
+
+
+1. 在 get_agents**** 函数中，在注释“创建摘要生成器代理”**** 下添加以下代码：
+
+    ```python
+   # Create a summarizer agent
+   summarizer_agent = ChatCompletionAgent(
+       name="SummarizerAgent",
+       instructions="""
+       Summarize the customer's feedback in one short sentence. Keep it neutral and concise.
+       Example output:
+       App crashes during photo upload.
+       User praises dark mode feature.
+       """,
+       service=AzureChatCompletion(),
    )
     ```
 
-    此代码在 Azure AI 项目客户端上创建代理定义。
-
-1. 查找注释 **Create a Semantic Kernel agent for the Azure AI incident manager agent**，并添加以下代码，以基于 Azure AI 代理定义创建语义内核代理。
+1. 在注释“创建分类器代理”**** 下添加以下代码：
 
     ```python
-   # Create a Semantic Kernel agent for the Azure AI incident manager agent
-   agent_incident = AzureAIAgent(
-        client=client,
-        definition=incident_agent_definition,
-        plugins=[LogFilePlugin()]
+   # Create a classifier agent
+   classifier_agent = ChatCompletionAgent(
+       name="ClassifierAgent",
+       instructions="""
+       Classify the feedback as one of the following: Positive, Negative, or Feature request.
+       """,
+       service=AzureChatCompletion(),
    )
     ```
 
-    此代码创建具有 **LogFilePlugin** 访问权限的语义内核代理。 此插件允许代理读取日志文件内容。
+1. 在注释“创建建议的操作代理”**** 下添加以下代码：
 
-    现在让我们创建第二个代理，它将响应问题并执行 DevOps 操作来解决这些问题。
+    ```python
+   # Create a recommended action agent
+   action_agent = ChatCompletionAgent(
+       name="ActionAgent",
+       instructions="""
+       Based on the summary and classification, suggest the next action in one short sentence.
+       Example output:
+       Escalate as a high-priority bug for the mobile team.
+       Log as positive feedback to share with design and marketing.
+       Log as enhancement request for product backlog.
+       """,
+       service=AzureChatCompletion(),
+   )
+    ```
 
-1. 在代码文件的顶部，花点时间观察 **DEVOPS_ASSISTANT_INSTRUCTIONS** 字符串。 这些指令将提供给新的 DevOps 助手代理。
+1. 在注释“返回代理列表”**** 下添加以下代码：
 
-1. 查找注释 **Create the devops agent on the Azure AI agent service**，并添加以下代码以创建 Azure AI 代理定义：
+    ```python
+   # Return a list of agents
+   return [summarizer_agent, classifier_agent, action_agent]
+    ```
+
+    在此列表中的代理顺序，就是它们在业务流程期间被依次选择执行的顺序。
+
+## 创建顺序式业务流程
+
+1. 在 main**** 函数中，找到注释“初始化输入任务”**** 并添加以下代码：
     
     ```python
-   # Create the devops agent on the Azure AI agent service
-   devops_agent_definition = await client.agents.create_agent(
-        model=ai_agent_settings.model_deployment_name,
-        name=DEVOPS_ASSISTANT,
-        instructions=DEVOPS_ASSISTANT_INSTRUCTIONS,
+   # Initialize the input task
+   task="""
+   I tried updating my profile picture several times today, but the app kept freezing halfway through the process. 
+   I had to restart it three times, and in the end, the picture still wouldn't upload. 
+   It's really frustrating and makes the app feel unreliable.
+   """
+    ```
+
+1. 在注释“创建顺序式业务流程”**** 下，添加以下代码以使用响应回叫定义顺序式业务流程：
+
+    ```python
+   # Create a sequential orchestration
+   sequential_orchestration = SequentialOrchestration(
+       members=get_agents(),
+       agent_response_callback=agent_response_callback,
    )
     ```
 
-1. 查找注释 **Create a Semantic Kernel agent for the devops Azure AI agent**，并添加以下代码以基于 Azure AI 代理定义创建语义内核代理。
-    
+    通过 `agent_response_callback`，可以在业务流程期间查看来自每个代理的响应。
+
+1. 在注释“创建运行时并启动”**** 下添加以下代码：
+
     ```python
-   # Create a Semantic Kernel agent for the devops Azure AI agent
-   agent_devops = AzureAIAgent(
-        client=client,
-        definition=devops_agent_definition,
-        plugins=[DevopsPlugin()]
+   # Create a runtime and start it
+   runtime = InProcessRuntime()
+   runtime.start()
+    ```
+
+1. 在注释“通过任务和运行时调用业务流程”**** 下添加以下代码：
+
+    ```python
+   # Invoke the orchestration with a task and the runtime
+   orchestration_result = await sequential_orchestration.invoke(
+       task=task,
+       runtime=runtime,
    )
     ```
 
-    **DevopsPlugin** 允许代理模拟 DevOps 任务，例如重启服务或回滚事务。
-
-### 定义群组聊天策略
-
-现在，需要提供用于确定应选择哪个代理来轮次对话，以及何时应结束对话的逻辑。
-
-让我们从 **SelectionStrategy** 开始，它确定哪个代理应该进行下一个轮次。
-
-1. 在 **SelectionStrategy** 类（位于 **main** 函数下方）中，查找注释 **Select the next agent that should take the next turn in the chat**，并添加以下代码以定义选择函数：
+1. 在注释“等待结果”**** 下添加以下代码：
 
     ```python
-   # Select the next agent that should take the next turn in the chat
-   async def select_agent(self, agents, history):
-        """"Check which agent should take the next turn in the chat."""
-
-        # The Incident Manager should go after the User or the Devops Assistant
-        if (history[-1].name == DEVOPS_ASSISTANT or history[-1].role == AuthorRole.USER):
-            agent_name = INCIDENT_MANAGER
-            return next((agent for agent in agents if agent.name == agent_name), None)
-        
-        # Otherwise it is the Devops Assistant's turn
-        return next((agent for agent in agents if agent.name == DEVOPS_ASSISTANT), None)
+   # Wait for the results
+   value = await orchestration_result.get(timeout=20)
+   print(f"\n****** Task Input ******{task}")
+   print(f"***** Final Result *****\n{value}")
     ```
 
-    此代码按每个轮次运行以确定哪个代理应做出响应，并检查聊天历史记录以查看上次响应的人员。
+    在此代码中，你将检索并显示业务流程的结果。 如果业务流程未在指定的超时范围内完成，将引发超时异常。
 
-    现在，让我们实现 **ApprovalTerminationStrategy** 类，以帮助在目标完成且对话可以结束时发出信号。
-
-1. 在 **ApprovalTerminationStrategy** 类中，查找注释 **End the chat if the agent has indicated there is no action needed**，并添加以下代码来定义终止函数：
+1. 找到注释“空闲时停止运行时”****，并添加以下代码：
 
     ```python
-   # End the chat if the agent has indicated there is no action needed
-   async def should_agent_terminate(self, agent, history):
-        """Check if the agent should terminate."""
-        return "no action needed" in history[-1].content.lower()
+   # Stop the runtime when idle
+   await runtime.stop_when_idle()
     ```
 
-    内核在代理响应后调用此函数，以确定是否满足完成条件。 在这种情况下，当事件管理器响应“无需执行任何操作”时，即达到目标。 此短语在事件管理器代理指令中定义。
-
-### 实现群组聊天
-
-现在有两个代理和可帮助其轮次和结束聊天的策略，你可以实现群组聊天。
-
-1. 在 main 函数中备份，查找注释 **Add the agents to a group chat with a custom termination and selection strategy**，并添加以下代码以创建群组聊天：
-
-    ```python
-   # Add the agents to a group chat with a custom termination and selection strategy
-   chat = AgentGroupChat(
-        agents=[agent_incident, agent_devops],
-        termination_strategy=ApprovalTerminationStrategy(
-            agents=[agent_incident], 
-            maximum_iterations=10, 
-            automatic_reset=True
-        ),
-        selection_strategy=SelectionStrategy(agents=[agent_incident,agent_devops]),      
-   )
-    ```
-
-    在此代码中，你将使用事件管理器和 DevOps 代理创建代理群组聊天对象。 还可以定义聊天的终止和选择策略。 请注意，**ApprovalTerminationStrategy** 仅与事件管理器代理关联，不与 DevOps 代理关联。 这使得事件管理器代理负责发出聊天结束的信号。 **SelectionStrategy** 包括所有应轮次聊天的代理。
-
-    请注意，自动重置标志将在聊天结束时自动清除聊天。 这样，代理就可以继续分析文件，无需使用过多不必要令牌的聊天历史记录对象。 
-
-1. 查找注释 **Append the current log file to the chat**，并添加以下代码以将最近读取的日志文件文本添加到聊天：
-
-    ```python
-   # Append the current log file to the chat
-   await chat.add_chat_message(logfile_msg)
-   print()
-    ```
-
-1. 查找注释 **Invoke a response from the agents**，并添加以下代码以调用群组聊天：
-
-    ```python
-   # Invoke a response from the agents
-   async for response in chat.invoke():
-        if response is None or not response.name:
-            continue
-        print(f"{response.content}")
-    ```
-
-    这是触发聊天的代码。 由于已将日志文件文本添加为消息，因此选择策略将确定哪个代理应读取和响应此消息，然后代理之间的对话将继续，直到满足终止策略的条件或达到最大迭代次数。
+    处理完成后，停止运行时以清理资源。
 
 1. 使用 **Ctrl+S** 命令保存对代码文件的更改。 可以保持打开状态（如果需要编辑代码以修复任何错误），或使用 **CTRL+Q** 命令关闭代码编辑器，同时保持 Cloud shell 命令行打开状态。
 
@@ -290,41 +273,40 @@ lab:
 1. 登录后，输入以下命令来运行应用程序：
 
     ```
-   python agent_chat.py
+   python agents.py
     ```
 
     应会看到类似于下面的信息：
 
     ```output
-    
-    INCIDENT_MANAGER > /home/.../logs/log1.log | Restart service ServiceX
-    DEVOPS_ASSISTANT > Service ServiceX restarted successfully.
-    INCIDENT_MANAGER > No action needed.
+    # SummarizerAgent
+    App freezes during profile picture upload, preventing completion.
+    # ClassifierAgent
+    Negative
+    # ActionAgent
+    Escalate as a high-priority bug for the development team.
 
-    INCIDENT_MANAGER > /home/.../logs/log2.log | Rollback transaction for transaction ID 987654.
-    DEVOPS_ASSISTANT > Transaction rolled back successfully.
-    INCIDENT_MANAGER > No action needed.
+    ****** Task Input ******
+    I tried updating my profile picture several times today, but the app kept freezing halfway through the process.
+    I had to restart it three times, and in the end, the picture still wouldn't upload.
+    It's really frustrating and makes the app feel unreliable.
 
-    INCIDENT_MANAGER > /home/.../logs/log3.log | Increase quota.
-    DEVOPS_ASSISTANT > Successfully increased quota.
-    (continued)
+    ***** Final Result *****
+    Escalate as a high-priority bug for the development team.
     ```
 
-    > **备注**：应用包含一些在处理每个日志文件间等待的代码，以尝试降低超出 TPM 速率限制的风险，还包括异常处理代码（以防出现此类情况） 如果订阅配额不足，模型可能无法响应。
+1. （可选）你可以尝试使用不同的任务输入运行代码，例如：
 
-1. 验证**日志**文件夹中的日志文件是否已使用来自 DevopsAssistant 的解析操作消息进行更新。
-
-    例如，log1.log 应追加以下日志消息：
-
-    ```log
-    [2025-02-27 12:43:38] ALERT  DevopsAssistant: Multiple failures detected in ServiceX. Restarting service.
-    [2025-02-27 12:43:38] INFO  ServiceX: Restart initiated.
-    [2025-02-27 12:43:38] INFO  ServiceX: Service restarted successfully.
+    ```output
+    I use the dashboard every day to monitor metrics, and it works well overall. But when I'm working late at night, the bright screen is really harsh on my eyes. If you added a dark mode option, it would make the experience much more comfortable.
+    ```
+    ```output
+    I reached out to your customer support yesterday because I couldn't access my account. The representative responded almost immediately, was polite and professional, and fixed the issue within minutes. Honestly, it was one of the best support experiences I've ever had.
     ```
 
 ## 总结
 
-在本练习中，已使用 Azure AI 代理服务和语义内核 SDK 创建可以自动检测问题并应用解决方案的 AI 事件和 DevOps 代理。 干得漂亮!
+在本练习中，你通过语义内核 SDK 练习了顺序式业务流程，将多个代理组合成一个简化的工作流。 干得漂亮!
 
 ## 清理
 

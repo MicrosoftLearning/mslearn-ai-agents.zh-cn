@@ -29,7 +29,7 @@ lab:
     - **Azure AI Foundry 资源**：*Azure AI Foundry 资源的有效名称*
     - **订阅**：Azure 订阅
     - **资源组**：*创建或选择资源组*
-    - **区域**：*选择任何**支持 AI 服务的位置***\*
+    - **区域**：选择推荐的任何 AI Foundry******\*
 
     > \* 某些 Azure AI 资源受区域模型配额约束。 如果稍后在练习中达到配额限制，你可能需要在不同的区域中创建另一个资源。
 
@@ -147,7 +147,7 @@ lab:
 
     > **备注**：该函数*模拟*发送电子邮件，其方式是将其打印到控制台。 在实际应用程序中，你将使用 SMTP 服务或类似方式实际发送电子邮件！
 
-1. 将备份移到新的 **EmailPlugin** 类代码上方，在 **create_expense_claim** 函数中，查找注释 **Get configuration settings**，并添加以下代码来加载配置文件并创建一个 **AzureAIAgentSettings** 对象（它将自动从配置中包含 Azure AI 代理设置）。
+1. 将备份移到新的 EmailPlugin**** 类代码上方，在 process_expenses_data**** 函数中，找到注释“获取配置设置”****，并添加以下代码来加载配置文件并创建一个 AzureAIAgentSettings**** 对象（它将自动从配置中包含 Azure AI 代理设置）。
 
     （请务必保持缩进级别）
 
