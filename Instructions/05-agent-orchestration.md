@@ -1,20 +1,18 @@
 ---
 lab:
-  title: 使用语义内核开发多代理解决方案
-  description: 了解如何配置多代理以使用语义内核 SDK 进行协作
+  title: 使用 Microsoft Agent Framework 开发多智能体解决方案
+  description: 了解如何使用 Microsoft Agent Framework SDK 配置多个智能体进行协作
 ---
 
 # 开发多代理解决方案
 
-在本练习中，你将在语义内核 SDK 中练习使用顺序式业务流程模式。 你将创建一个简单的管道，其中包含三个代理，共同处理客户反馈并建议后续步骤。 你将创建以下代理：
+在本练习中，你将练习在 Microsoft Agent Framework SDK 中使用顺序业务流程模式。 你将创建一个简单的管道，其中包含三个代理，共同处理客户反馈并建议后续步骤。 你将创建以下代理：
 
 - “摘要生成器”代理会将原始反馈浓缩为简短、中立的语句。
 - “分类器”代理会将反馈归类为“正面”、“负面”或“功能”请求。
 - 最后，“建议的操作”代理会推荐适当的后续步骤。
 
-你将了解如何使用语义内核 SDK 将问题拆解，分配给合适的代理，并生成可执行的结果。 现在就开始吧！
-
-> **提示**：本练习中使用的代码基于适用于 Python 的 Semantic Kernel SDK。 可以使用适用于 Microsoft .NET 和 Java 的 SDK 开发类似解决方案。 有关详细信息，请参阅[支持的语义内核语言](https://learn.microsoft.com/semantic-kernel/get-started/supported-languages)。
+你将了解如何使用 Microsoft Agent Framework SDK 分解问题、通过正确的智能体路由问题并生成可操作的结果。 现在就开始吧！
 
 完成此练习大约需要 30 分钟。
 
@@ -95,10 +93,8 @@ lab:
     ```
    python -m venv labenv
    ./labenv/bin/Activate.ps1
-   pip install python-dotenv azure-identity semantic-kernel --upgrade
+   pip install azure-identity agent-framework
     ```
-
-    > **注意**：安装语义内核时，会自动安装与语义内核兼容的 azure-ai-projects 版本。****
 
 1. 输入以下命令以编辑所提供的配置文件：
 
@@ -108,7 +104,7 @@ lab:
 
     该文件已在代码编辑器中打开。
 
-1. 在代码文件中，将 your_openai_endpoint**** 占位符替换为项目的 Azure Open AI 终结点（从 Azure AI Foundry 门户中的项目“概述”**** 页的 Azure OpenAI**** 下复制）。 将 your_openai_api_key**** 替换为项目的 API 密钥，并确保 MODEL_DEPLOYMENT_NAME 变量设置为模型部署名称（应为 gpt-4o**）。
+1. 在代码文件中，将 your_openai_endpoint 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“概述”页复制）。******** 将 your_model_deployment 占位符替换为分配给 gpt-4o 模型部署的名称。****
 
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
@@ -127,130 +123,86 @@ lab:
     ```python
    # Add references
    import asyncio
-   from semantic_kernel.agents import Agent, ChatCompletionAgent, SequentialOrchestration
-   from semantic_kernel.agents.runtime import InProcessRuntime
-   from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
-   from semantic_kernel.contents import ChatMessageContent
+   from typing import cast
+   from agent_framework import ChatMessage, Role, SequentialBuilder, WorkflowOutputEvent
+   from agent_framework.azure import AzureOpenAIChatClient
+   from azure.identity import AzureCliCredential
     ```
 
+1. 在 main 函数中，花点时间查看智能体说明。**** 这些说明定义业务流程中每个智能体的行为。
 
-1. 在 get_agents**** 函数中，在注释“创建摘要生成器代理”**** 下添加以下代码：
+1. 在注释“Create the chat client”下添加以下代码****：
 
     ```python
-   # Create a summarizer agent
-   summarizer_agent = ChatCompletionAgent(
-       name="SummarizerAgent",
-       instructions="""
-       Summarize the customer's feedback in one short sentence. Keep it neutral and concise.
-       Example output:
-       App crashes during photo upload.
-       User praises dark mode feature.
-       """,
-       service=AzureChatCompletion(),
+   # Create the chat client
+   chat_client = AzureOpenAIChatClient(credential=AzureCliCredential())
+    ```
+
+1. 在注释“Create agents”下添加以下代码：****
+
+    ```python
+   # Create agents
+   summarizer = chat_client.create_agent(
+       instructions=summarizer_instructions,
+       name="summarizer",
+   )
+
+   classifier = chat_client.create_agent(
+       instructions=classifier_instructions,
+       name="classifier",
+   )
+
+   action = chat_client.create_agent(
+       instructions=action_instructions,
+       name="action",
    )
     ```
-
-1. 在注释“创建分类器代理”**** 下添加以下代码：
-
-    ```python
-   # Create a classifier agent
-   classifier_agent = ChatCompletionAgent(
-       name="ClassifierAgent",
-       instructions="""
-       Classify the feedback as one of the following: Positive, Negative, or Feature request.
-       """,
-       service=AzureChatCompletion(),
-   )
-    ```
-
-1. 在注释“创建建议的操作代理”**** 下添加以下代码：
-
-    ```python
-   # Create a recommended action agent
-   action_agent = ChatCompletionAgent(
-       name="ActionAgent",
-       instructions="""
-       Based on the summary and classification, suggest the next action in one short sentence.
-       Example output:
-       Escalate as a high-priority bug for the mobile team.
-       Log as positive feedback to share with design and marketing.
-       Log as enhancement request for product backlog.
-       """,
-       service=AzureChatCompletion(),
-   )
-    ```
-
-1. 在注释“返回代理列表”**** 下添加以下代码：
-
-    ```python
-   # Return a list of agents
-   return [summarizer_agent, classifier_agent, action_agent]
-    ```
-
-    在此列表中的代理顺序，就是它们在业务流程期间被依次选择执行的顺序。
 
 ## 创建顺序式业务流程
 
-1. 在 main**** 函数中，找到注释“初始化输入任务”**** 并添加以下代码：
+1. 在 main 函数中，找到注释“Initialize the current feedback”并添加以下代码：********
     
     ```python
-   # Initialize the input task
-   task="""
-   I tried updating my profile picture several times today, but the app kept freezing halfway through the process. 
-   I had to restart it three times, and in the end, the picture still wouldn't upload. 
-   It's really frustrating and makes the app feel unreliable.
+   # Initialize the current feedback
+   feedback="""
+   I use the dashboard every day to monitor metrics, and it works well overall. 
+   But when I'm working late at night, the bright screen is really harsh on my eyes. 
+   If you added a dark mode option, it would make the experience much more comfortable.
    """
     ```
 
-1. 在注释“创建顺序式业务流程”**** 下，添加以下代码以使用响应回叫定义顺序式业务流程：
+1. 在注释“Build a sequential orchestration”下，添加以下代码以使用定义的智能体定义顺序业务流程：****
 
     ```python
-   # Create a sequential orchestration
-   sequential_orchestration = SequentialOrchestration(
-       members=get_agents(),
-       agent_response_callback=agent_response_callback,
-   )
+   # Build sequential orchestration
+    workflow = SequentialBuilder().participants([summarizer, classifier, action]).build()
     ```
 
-    通过 `agent_response_callback`，可以在业务流程期间查看来自每个代理的响应。
+    智能体将按照将反馈添加到业务流程的顺序进行处理。
 
-1. 在注释“创建运行时并启动”**** 下添加以下代码：
+1. 在注释“Run and collect outputs”下添加以下代码****：
 
     ```python
-   # Create a runtime and start it
-   runtime = InProcessRuntime()
-   runtime.start()
+   # Run and collect outputs
+   outputs: list[list[ChatMessage]] = []
+   async for event in workflow.run_stream(f"Customer feedback: {feedback}"):
+       if isinstance(event, WorkflowOutputEvent):
+           outputs.append(cast(list[ChatMessage], event.data))
     ```
 
-1. 在注释“通过任务和运行时调用业务流程”**** 下添加以下代码：
+    此代码将运行业务流程，并从每个参与智能体收集输出。
+
+1. 在注释“Display outputs”下添加以下代码：****
 
     ```python
-   # Invoke the orchestration with a task and the runtime
-   orchestration_result = await sequential_orchestration.invoke(
-       task=task,
-       runtime=runtime,
-   )
+   # Display outputs
+   if outputs:
+       for i, msg in enumerate(outputs[-1], start=1):
+           name = msg.author_name or ("assistant" if msg.role == Role.ASSISTANT else "user")
+           print(f"{'-' * 60}\n{i:02d} [{name}]\n{msg.text}")
     ```
 
-1. 在注释“等待结果”**** 下添加以下代码：
-
-    ```python
-   # Wait for the results
-   value = await orchestration_result.get(timeout=20)
-   print(f"\n****** Task Input ******{task}")
-   print(f"***** Final Result *****\n{value}")
-    ```
-
-    在此代码中，你将检索并显示业务流程的结果。 如果业务流程未在指定的超时范围内完成，将引发超时异常。
-
-1. 找到注释“空闲时停止运行时”****，并添加以下代码：
-
-    ```python
-   # Stop the runtime when idle
-   await runtime.stop_when_idle()
-    ```
-
-    处理完成后，停止运行时以清理资源。
+    此代码会格式化并显示从业务流程收集的工作流输出中的消息。
 
 1. 使用 **Ctrl+S** 命令保存对代码文件的更改。 可以保持打开状态（如果需要编辑代码以修复任何错误），或使用 **CTRL+Q** 命令关闭代码编辑器，同时保持 Cloud shell 命令行打开状态。
 
@@ -279,23 +231,25 @@ lab:
     应会看到类似于下面的信息：
 
     ```output
-    # SummarizerAgent
-    App freezes during profile picture upload, preventing completion.
-    # ClassifierAgent
-    Negative
-    # ActionAgent
-    Escalate as a high-priority bug for the development team.
+    ------------------------------------------------------------
+    01 [user]
+    Customer feedback:
+        I use the dashboard every day to monitor metrics, and it works well overall.
+        But when I'm working late at night, the bright screen is really harsh on my eyes.
+        If you added a dark mode option, it would make the experience much more comfortable.
 
-    ****** Task Input ******
-    I tried updating my profile picture several times today, but the app kept freezing halfway through the process.
-    I had to restart it three times, and in the end, the picture still wouldn't upload.
-    It's really frustrating and makes the app feel unreliable.
-
-    ***** Final Result *****
-    Escalate as a high-priority bug for the development team.
+    ------------------------------------------------------------
+    02 [summarizer]
+    User requests a dark mode for better nighttime usability.
+    ------------------------------------------------------------
+    03 [classifier]
+    Feature request
+    ------------------------------------------------------------
+    04 [action]
+    Log as enhancement request for product backlog.
     ```
 
-1. （可选）你可以尝试使用不同的任务输入运行代码，例如：
+1. （可选）可以尝试使用不同的反馈输入来运行代码，例如：
 
     ```output
     I use the dashboard every day to monitor metrics, and it works well overall. But when I'm working late at night, the bright screen is really harsh on my eyes. If you added a dark mode option, it would make the experience much more comfortable.
@@ -306,7 +260,7 @@ lab:
 
 ## 总结
 
-在本练习中，你通过语义内核 SDK 练习了顺序式业务流程，将多个代理组合成一个简化的工作流。 干得漂亮!
+在本练习中，你练习了使用 Microsoft Agent Framework SDK 的顺序业务流程，将多个智能体组合成一个简化的工作流。 干得漂亮!
 
 ## 清理
 

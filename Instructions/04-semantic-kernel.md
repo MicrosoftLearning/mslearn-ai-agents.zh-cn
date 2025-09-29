@@ -1,14 +1,12 @@
 ---
 lab:
-  title: 使用语义内核 SDK 开发 Azure AI 代理
-  description: 了解如何使用语义内核 SDK 创建并使用 Azure AI 代理服务的代理。
+  title: 使用 Microsoft Agent Framework SDK 开发 Azure AI 智能体
+  description: 了解如何使用 Microsoft Agent Framework SDK 创建和使用 Azure AI 聊天智能体。
 ---
 
-# 使用语义内核 SDK 开发 Azure AI 代理
+# 使用 Microsoft Agent Framework SDK 开发 Azure AI 聊天智能体
 
-在本练习中，你将使用 Azure AI 代理服务和语义内核创建一个处理报销申请的 AI 代理。
-
-> **提示**：本练习中使用的代码基于适用于 Python 的 Semantic Kernel SDK。 可以使用适用于 Microsoft .NET 和 Java 的 SDK 开发类似解决方案。 有关详细信息，请参阅[支持的语义内核语言](https://learn.microsoft.com/semantic-kernel/get-started/supported-languages)。
+在本练习中，你将使用 Azure AI 智能体服务和 Microsoft Agent Framework 创建处理报销申请的 AI 智能体。
 
 完成此练习大约需要 30 分钟。
 
@@ -72,7 +70,7 @@ lab:
 1. 克隆存储库后，输入以下命令切换到代码文件所在的目录，并查看其中的所有文件。
 
     ```
-   cd ai-agents/Labfiles/04-semantic-kernel/python
+   cd ai-agents/Labfiles/04-agent-framework/python
    ls -a -l
     ```
 
@@ -85,10 +83,8 @@ lab:
     ```
    python -m venv labenv
    ./labenv/bin/Activate.ps1
-   pip install python-dotenv azure-identity semantic-kernel --upgrade 
+   pip install azure-identity agent-framework
     ```
-
-    > **注意**：安装语义内核时，会自动安装与语义内核兼容的 azure-ai-projects 版本。****
 
 1. 输入以下命令以编辑已提供的配置文件：
 
@@ -108,98 +104,60 @@ lab:
 1. 输入以下命令以编辑已提供的代理代码文件：
 
     ```
-   code semantic-kernel.py
+   code agent-framework.py
     ```
 
 1. 查看文件中的代码。 该结构包含：
     - 一些**导入**语句，用于添加对常用命名空间的引用
     - 一个 *main* 函数，用于加载包含支出数据的文件，向用户询问指令，然后调用...
     - 必须在 **process_expenses_data** 函数中添加创建和使用代理的代码
-    - 包含一个名为 **send_email** 的内核函数的 **EmailPlugin** 类；该函数将被代理用来模拟发送电子邮件的功能。
 
 1. 在文件顶部，现有 **import** 语句之后，查找注释“**Add references**”，并添加以下代码，以引用实现代理所需的库中的命名空间：
 
     ```python
    # Add references
-   from dotenv import load_dotenv
-   from azure.identity.aio import DefaultAzureCredential
-   from semantic_kernel.agents import AzureAIAgent, AzureAIAgentSettings, AzureAIAgentThread
-   from semantic_kernel.functions import kernel_function
+   from agent_framework import AgentThread, ChatAgent
+   from agent_framework.foundry import FoundryChatClient
+   from azure.identity.aio import AzureCliCredential
+   from pydantic import Field
    from typing import Annotated
     ```
 
-1. 在文件底部附近，查找注释 **Create a Plugin for the email functionality** 并添加以下代码，定义一个插件类，该类包含代理用于发送电子邮件的函数（插件是向语义内核代理添加自定义功能的方式）。
+1. 在文件底部附近，找到注释“Create a tool function for the email functionality”，并添加以下代码以定义智能体将用于发送电子邮件的函数（工具是向智能体添加自定义功能的方法）****
 
     ```python
-   # Create a Plugin for the email functionality
-   class EmailPlugin:
-       """A Plugin to simulate email functionality."""
-    
-       @kernel_function(description="Sends an email.")
-       def send_email(self,
-                      to: Annotated[str, "Who to send the email to"],
-                      subject: Annotated[str, "The subject of the email."],
-                      body: Annotated[str, "The text body of the email."]):
-           print("\nTo:", to)
-           print("Subject:", subject)
-           print(body, "\n")
+   # Create a tool function for the email functionality
+   def send_email(
+    to: Annotated[str, Field(description="Who to send the email to")],
+    subject: Annotated[str, Field(description="The subject of the email.")],
+    body: Annotated[str, Field(description="The text body of the email.")]):
+        print("\nTo:", to)
+        print("Subject:", subject)
+        print(body, "\n")
     ```
 
     > **备注**：该函数*模拟*发送电子邮件，其方式是将其打印到控制台。 在实际应用程序中，你将使用 SMTP 服务或类似方式实际发送电子邮件！
 
-1. 将备份移到新的 EmailPlugin**** 类代码上方，在 process_expenses_data**** 函数中，找到注释“获取配置设置”****，并添加以下代码来加载配置文件并创建一个 AzureAIAgentSettings**** 对象（它将自动从配置中包含 Azure AI 代理设置）。
+1. 在 send_email 代码上方进行备份，在 process_expenses_data 函数中，找到注释“Create a chat agent”，并添加以下代码以使用工具和说明创建 ChatAgent 对象。****************
 
     （请务必保持缩进级别）
 
     ```python
-   # Get configuration settings
-   load_dotenv()
-   ai_agent_settings = AzureAIAgentSettings()
-    ```
-
-1. 查找注释 **Connect to the Azure AI Foundry project**，并添加以下代码，使用当前登录所使用的 Azure 凭据连接到 Azure AI Foundry 项目。
-
-    （请务必保持缩进级别）
-
-    ```python
-   # Connect to the Azure AI Foundry project
+   # Create a chat agent
    async with (
-        DefaultAzureCredential(
-            exclude_environment_credential=True,
-            exclude_managed_identity_credential=True) as creds,
-        AzureAIAgent.create_client(
-            credential=creds
-        ) as project_client,
+       AzureCliCredential() as credential,
+       ChatAgent(
+           chat_client=FoundryChatClient(async_credential=credential),
+           name="expenses_agent",
+           instructions="""You are an AI assistant for expense claim submission.
+                           When a user submits expenses data and requests an expense claim, use the plug-in function to send an email to expenses@contoso.com with the subject 'Expense Claim`and a body that contains itemized expenses with a total.
+                           Then confirm to the user that you've done so.""",
+           tools=send_email,
+       ) as agent,
    ):
     ```
 
-1. 查找注释 **Define an Azure AI agent that sends an expense claim email**，并添加以下代码，为代理创建 Azure AI 代理定义。
-
-    （请务必保持缩进级别）
-
-    ```python
-   # Define an Azure AI agent that sends an expense claim email
-   expenses_agent_def = await project_client.agents.create_agent(
-        model= ai_agent_settings.model_deployment_name,
-        name="expenses_agent",
-        instructions="""You are an AI assistant for expense claim submission.
-                        When a user submits expenses data and requests an expense claim, use the plug-in function to send an email to expenses@contoso.com with the subject 'Expense Claim`and a body that contains itemized expenses with a total.
-                        Then confirm to the user that you've done so."""
-   )
-    ```
-
-1. 查找注释 **Create a semantic kernel agent**，并添加以下代码以创建 Azure AI 代理的语义内核代理对象，并包含对 **EmailPlugin** 插件的引用。
-
-    （请确认保持缩进级别）
-
-    ```python
-   # Create a semantic kernel agent
-   expenses_agent = AzureAIAgent(
-        client=project_client,
-        definition=expenses_agent_def,
-        plugins=[EmailPlugin()]
-   )
-    ```
+    请注意，AzureCliCredential 对象将自动包含来自配置的 Azure AI Foundry 项目设置。****
 
 1. 查找注释：**使用代理处理报销申请**，并添加以下代码以创建一个线程供代理运行，然后使用聊天消息调用它。
 
@@ -207,23 +165,16 @@ lab:
 
     ```python
    # Use the agent to process the expenses data
-   # If no thread is provided, a new thread will be
-   # created and returned with the initial response
-   thread: AzureAIAgentThread | None = None
    try:
-        # Add the input prompt to a list of messages to be submitted
-        prompt_messages = [f"{prompt}: {expenses_data}"]
-        # Invoke the agent for the specified thread with the messages
-        response = await expenses_agent.get_response(prompt_messages, thread=thread)
-        # Display the response
-        print(f"\n# {response.name}:\n{response}")
+       # Add the input prompt to a list of messages to be submitted
+       prompt_messages = [f"{prompt}: {expenses_data}"]
+       # Invoke the agent for the specified thread with the messages
+       response = await agent.run(prompt_messages)
+       # Display the response
+       print(f"\n# {response.name}:\n{response}")
    except Exception as e:
-        # Something went wrong
-        print (e)
-   finally:
-        # Cleanup: Delete the thread and agent
-        await thread.delete() if thread else None
-        await project_client.agents.delete_agent(expenses_agent.id)
+       # Something went wrong
+       print (e)
     ```
 
 1. 审阅代理的完整代码，使用注释帮助你理解每个代码块的作用，然后保存代码更改 （**CTRL+S**)。
@@ -245,7 +196,7 @@ lab:
 1. 登录后，输入以下命令来运行应用程序：
 
     ```
-   python semantic-kernel.py
+   python agent-framework.py
     ```
     
     应用程序使用已通过身份验证的 Azure 会话凭据连接到项目，创建并运行代理。
@@ -262,7 +213,7 @@ lab:
 
 ## 总结
 
-在本练习中，你使用了 Azure AI 代理服务 SDK 和语义内核来创建代理。
+在本练习中，你使用了 Microsoft Agent Framework SDK 通过自定义工具创建智能体。
 
 ## 清理
 
