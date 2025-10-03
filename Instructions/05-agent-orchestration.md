@@ -125,7 +125,7 @@ lab:
    import asyncio
    from typing import cast
    from agent_framework import ChatMessage, Role, SequentialBuilder, WorkflowOutputEvent
-   from agent_framework.azure import AzureOpenAIChatClient
+   from agent_framework.azure import AzureAIAgentClient
    from azure.identity import AzureCliCredential
     ```
 
@@ -135,10 +135,15 @@ lab:
 
     ```python
    # Create the chat client
-   chat_client = AzureOpenAIChatClient(credential=AzureCliCredential())
+   credential = AzureCliCredential()
+   async with (
+       AzureAIAgentClient(async_credential=credential) as chat_client,
+   ):
     ```
 
 1. 在注释“Create agents”下添加以下代码：****
+
+    （请务必保持缩进级别）
 
     ```python
    # Create agents
@@ -162,6 +167,8 @@ lab:
 
 1. 在 main 函数中，找到注释“Initialize the current feedback”并添加以下代码：********
     
+    （请务必保持缩进级别）
+
     ```python
    # Initialize the current feedback
    feedback="""
@@ -175,7 +182,7 @@ lab:
 
     ```python
    # Build sequential orchestration
-    workflow = SequentialBuilder().participants([summarizer, classifier, action]).build()
+   workflow = SequentialBuilder().participants([summarizer, classifier, action]).build()
     ```
 
     智能体将按照将反馈添加到业务流程的顺序进行处理。
