@@ -1,41 +1,45 @@
 # Add references
 
 
-def get_agents() -> list[Agent]:
-    # Create a summarizer agent
-    
-
-    # Create a classifier agent
-    
-
-    # Create a recommmended action agent
-    
-
-    # Return a list of agents
-    
-
-def agent_response_callback(message: ChatMessageContent) -> None:
-    print(f"# {message.name}\n{message.content}")
-
-
 async def main():
-    # Initialize the input task
+    # Agent instructions
+    summarizer_instructions="""
+    Summarize the customer's feedback in one short sentence. Keep it neutral and concise.
+    Example output:
+    App crashes during photo upload.
+    User praises dark mode feature.
+    """
+
+    classifier_instructions="""
+    Classify the feedback as one of the following: Positive, Negative, or Feature request.
+    """
+
+    action_instructions="""
+    Based on the summary and classification, suggest the next action in one short sentence.
+    Example output:
+    Escalate as a high-priority bug for the mobile team.
+    Log as positive feedback to share with design and marketing.
+    Log as enhancement request for product backlog.
+    """
+
+    # Create the chat client
     
 
-    # Create a sequential orchestration with a response callback to observe the output from each agent.
+        # Create agents
     
 
-    # Create a runtime and start it
+        # Initialize the current feedback
     
 
-    # Invoke the orchestration with a task and the runtime
+        # Build sequential orchestration
     
-
-    # Wait for the results
     
-
-    # Stop the runtime when idle
+        # Run and collect outputs
     
-
+    
+        # Display outputs
+    
+    
+    
 if __name__ == "__main__":
     asyncio.run(main())
