@@ -14,41 +14,36 @@ lab:
 
 > **注意**：本练习中使用的一些技术处于预览版或积极开发阶段。 可能会遇到一些意想不到的行为、警告或错误。
 
-## 在 Azure AI Foundry 项目中部署模型
+## 创建 Azure AI Foundry 项目
 
-让我们首先在 Azure AI Foundry 项目中部署模型。
+让我们首先创建 Azure AI Foundry 项目。
 
 1. 在 Web 浏览器中打开 [Azure AI Foundry 门户](https://ai.azure.com)，网址为：`https://ai.azure.com`，然后使用 Azure 凭据登录。 关闭首次登录时打开的任何使用技巧或快速入门窗格，如有必要，使用左上角的 **Azure AI Foundry** 徽标导航到主页，类似下图所示（若已打开**帮助**面板，请关闭）：
 
     ![Azure AI Foundry 门户的屏幕截图。](./Media/ai-foundry-home.png)
 
-1. 在主页的“**浏览模型和功能**”部分中，搜索 `gpt-4o` 模型；我们将在项目中使用它。
-1. 在搜索结果中，选择 **gpt-4o** 模型以查看其详细信息，然后在模型的页面顶部，选择“**使用此模型**”。
+1. 在主页中，选择“**创建代理**”。
 1. 当提示创建项目时，输入项目的有效名称并展开“**高级选项**”。
 1. 为项目确认以下设置：
     - **Azure AI Foundry 资源**：*Azure AI Foundry 资源的有效名称*
     - **订阅**：Azure 订阅
     - **资源组**：*创建或选择资源组*
-    - **区域**：*选择任何**支持 AI 服务的位置***\*
+    - **区域**：选择推荐的任何 AI Foundry******\*
 
     > \* 某些 Azure AI 资源受区域模型配额约束。 如果稍后在练习中达到配额限制，你可能需要在不同的区域中创建另一个资源。
 
-1. 选择“**创建**”并等待项目（包括所选的 gpt-4 模型部署）创建。
-1. 创建项目后，将自动打开聊天操场。
+1. 选择“**创建**”并等待创建项目。
+1. 如果出现提示，请使用“全局标准”或“标准”部署选项（具体取决于配额可用性）部署 gpt-4o 模型。********
 
-    > **备注**：对于本练习，此模型的默认 TPM 设置可能太低。 减少 TPM 有助于避免过度使用正在使用的订阅中可用的配额。 
+    >**注意**：如果配额可用，则在创建智能体和项目时，可能会自动部署 GPT-4o 基础模型。
 
-1. 在左侧导航窗格中，选择“**模型和终结点**”，然后选择 **gpt-4o** 部署。
-
-1. 选择“**编辑**”，然后增加“**每分钟令牌速率限制**”
-
-   > **备注**：40,000 TPM 足以应对本练习使用的数据。 如果可用配额低于上述 50,000 TPM，你仍然可完成本练习，但超过速率限制时可能需要等待并重新提交提示。
+1. 项目创建完成后，会打开“智能体”操场。
 
 1. 在左侧导航窗格中，选择“**概述**”以查看项目的主页；如下所示：
 
     ![Azure AI Foundry 项目概述页面的屏幕截图。](./Media/ai-foundry-project.png)
 
-1. 将 **Azure AI Foundry 项目终结点**值复制到记事本，因为你将使用它连接到客户端应用程序中的项目。
+1. 将 **Azure AI Foundry 项目终结点**值复制到记事本，因为你将使用它们连接到客户端应用程序中的项目。
 
 ## 创建 AI 代理客户端应用
 
@@ -106,7 +101,7 @@ lab:
 
     该文件已在代码编辑器中打开。
 
-1. 在代码文件中，将 **your_project_endpoint** 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“**概述**”页复制而来），并将 **your_model_deployment** 占位符替换为 分配给 gpt-4 模型部署的名称。
+1. 在代码文件中，将 your_project_endpoint**** 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“概述”**** 页复制），并将 your_model_deployment**** 占位符替换为分配给 gpt-4o 模型部署的名称（默认为 `gpt-4o`）。
 
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
@@ -125,133 +120,200 @@ lab:
 1. 查找注释 **Add references**，并添加以下代码，以导入你将需要的类：
 
     ```python
-    # Add references
-    from azure.ai.agents import AgentsClient
-    from azure.ai.agents.models import ConnectedAgentTool, MessageRole, ListSortOrder, ToolSet, FunctionTool
-    from azure.identity import DefaultAzureCredential
+   # Add references
+   from azure.ai.agents import AgentsClient
+   from azure.ai.agents.models import ConnectedAgentTool, MessageRole, ListSortOrder, ToolSet, FunctionTool
+   from azure.identity import DefaultAzureCredential
     ```
 
-1. 在注释“主智能体的说明”下，输入以下代码：****
+1. 请注意，已提供用于从环境变量加载项目终结点和模型名称的代码。
+
+1. 找到注释“连接到代理客户端”**** 并添加以下代码，创建一个连接到项目的 AgentsClient：
 
     ```python
-    # Instructions for the primary agent
-    triage_agent_instructions = """
-    Triage the given ticket. Use the connected tools to determine the ticket's priority, 
-    which team it should be assigned to, and how much effort it may take.
-    """
+   # Connect to the agents client
+   agents_client = AgentsClient(
+        endpoint=project_endpoint,
+        credential=DefaultAzureCredential(
+            exclude_environment_credential=True, 
+            exclude_managed_identity_credential=True
+        ),
+   )
     ```
 
-1. 找到注释“在 Azure AI 智能体服务上创建优先级智能体”，并添加以下代码以创建 Azure AI 智能体。****
+    现在，你将添加代码以使用 AgentsClient 创建多个代理，每个代理都具有在处理支持工单时要扮演的特定角色。
+
+    > **提示**：添加后续代码时，请务必在 `using agents_client:` 语句下保持正确的缩进级别。
+
+1. 找到注释“创建代理以确定支持工单的优先级”****，并输入以下代码（注意保留正确的缩进级别）：
 
     ```python
-    # Create the priority agent on the Azure AI agent service
-    priority_agent = agents_client.create_agent(
+   # Create an agent to prioritize support tickets
+   priority_agent_name = "priority_agent"
+   priority_agent_instructions = """
+   Assess how urgent a ticket is based on its description.
+
+   Respond with one of the following levels:
+   - High: User-facing or blocking issues
+   - Medium: Time-sensitive but not breaking anything
+   - Low: Cosmetic or non-urgent tasks
+
+   Only output the urgency level and a very brief explanation.
+   """
+
+   priority_agent = agents_client.create_agent(
         model=model_deployment,
         name=priority_agent_name,
         instructions=priority_agent_instructions
-    )
+   )
     ```
 
-    此代码在 Azure AI 代理客户端中创建代理定义。
-
-1. 找到注释“为优先级智能体创建连接的智能体工具”，并添加以下代码：****
+1. 找到注释“创建代理以将工单分配给相应的团队”****，并输入以下代码：
 
     ```python
-    # Create a connected agent tool for the priority agent
-    priority_agent_tool = ConnectedAgentTool(
-        id=priority_agent.id, 
-        name=priority_agent_name, 
-        description="Assess the priority of a ticket"
-    )
-    ```
+   # Create an agent to assign tickets to the appropriate team
+   team_agent_name = "team_agent"
+   team_agent_instructions = """
+   Decide which team should own each ticket.
 
-    接下来创建其他会审智能体。
+   Choose from the following teams:
+   - Frontend
+   - Backend
+   - Infrastructure
+   - Marketing
 
-1. 在注释“创建团队智能体和连接工具”下，添加以下代码：****
-    
-    ```python
-    # Create the team agent and connected tool
-    team_agent = agents_client.create_agent(
+   Base your answer on the content of the ticket. Respond with the team name and a very brief explanation.
+   """
+
+   team_agent = agents_client.create_agent(
         model=model_deployment,
         name=team_agent_name,
         instructions=team_agent_instructions
-    )
-    team_agent_tool = ConnectedAgentTool(
-        id=team_agent.id, 
-        name=team_agent_name, 
-        description="Determines which team should take the ticket"
-    )
+   )
     ```
 
-1. 在注释“创建工作量智能体和连接工具”下，添加以下代码：****
-    
+1. 找到注释“创建代理以估算支持工单的工作量”****，并输入以下代码：
+
     ```python
-    # Create the effort agent and connected tool
-    effort_agent = agents_client.create_agent(
+   # Create an agent to estimate effort for a support ticket
+   effort_agent_name = "effort_agent"
+   effort_agent_instructions = """
+   Estimate how much work each ticket will require.
+
+   Use the following scale:
+   - Small: Can be completed in a day
+   - Medium: 2-3 days of work
+   - Large: Multi-day or cross-team effort
+
+   Base your estimate on the complexity implied by the ticket. Respond with the effort level and a brief justification.
+   """
+
+   effort_agent = agents_client.create_agent(
         model=model_deployment,
         name=effort_agent_name,
         instructions=effort_agent_instructions
-    )
-    effort_agent_tool = ConnectedAgentTool(
+   )
+    ```
+
+    到目前为止，你已经创建了三个代理；每个代理在会审支持工单时都扮演着特定的角色。 现在，我们为每个代理创建 ConnectedAgentTool 对象，以便其他代理可以使用它们。
+
+1. 找到注释“为支持代理创建连接的代理工具”****，并输入以下代码：
+
+    ```python
+   # Create connected agent tools for the support agents
+   priority_agent_tool = ConnectedAgentTool(
+        id=priority_agent.id, 
+        name=priority_agent_name, 
+        description="Assess the priority of a ticket"
+   )
+    
+   team_agent_tool = ConnectedAgentTool(
+        id=team_agent.id, 
+        name=team_agent_name, 
+        description="Determines which team should take the ticket"
+   )
+    
+   effort_agent_tool = ConnectedAgentTool(
         id=effort_agent.id, 
         name=effort_agent_name, 
         description="Determines the effort required to complete the ticket"
-    )
+   )
     ```
 
+    现在，你已准备好创建一个主代理，它将根据需要使用连接的代理协调工单会审过程。
 
-1. 在注释**使用连接代理工具创建主代理**，添加以下代码：
-    
+1. 找到注释“创建代理以使用连接的代理对支持工单处理进行会审”****，并输入以下代码：
+
     ```python
-    # Create a main agent with the Connected Agent tools
-    agent = agents_client.create_agent(
+   # Create an agent to triage support ticket processing by using connected agents
+   triage_agent_name = "triage-agent"
+   triage_agent_instructions = """
+   Triage the given ticket. Use the connected tools to determine the ticket's priority, 
+   which team it should be assigned to, and how much effort it may take.
+   """
+
+   triage_agent = agents_client.create_agent(
         model=model_deployment,
-        name="triage-agent",
+        name=triage_agent_name,
         instructions=triage_agent_instructions,
         tools=[
             priority_agent_tool.definitions[0],
             team_agent_tool.definitions[0],
             effort_agent_tool.definitions[0]
         ]
-    )
+   )
     ```
 
-1. 查找注释**创建聊天会话线程**，并添加以下代码：
-    
+    现在，你已经定义了一个主代理，可以向它提交提示，让它使用其他代理来会审支持问题。
+
+1. 找到注释“使用代理会审支持问题”****，并输入以下代码：
+
     ```python
-    # Create thread for the chat session
-    print("Creating agent thread.")
-    thread = agents_client.threads.create()
-    ```
+   # Use the agents to triage a support issue
+   print("Creating agent thread.")
+   thread = agents_client.threads.create()  
 
-
-1. 在注释“创建票证提示”下，添加以下代码：****
+   # Create the ticket prompt
+   prompt = input("\nWhat's the support problem you need to resolve?: ")
     
-    ```python
-    # Create the ticket prompt
-    prompt = "Users can't reset their password from the mobile app."
-
-    ```
-
-1. 在注释**发送提示到代理**下，添加以下代码：
-    
-    ```python
-    # Send a prompt to the agent
-    message = agents_client.messages.create(
+   # Send a prompt to the agent
+   message = agents_client.messages.create(
         thread_id=thread.id,
         role=MessageRole.USER,
         content=prompt,
-    )
-    ```
-
-1. 在注释**创建并使用工具在线程中运行创建和处理代理**下，添加以下代码：
+   )   
     
-    ```python
-    # Create and process Agent run in thread with tools
-    print("Processing agent thread. Please wait.")
-    run = agents_client.runs.create_and_process(thread_id=thread.id, agent_id=agent.id)
+   # Run the thread usng the primary agent
+   print("\nProcessing agent thread. Please wait.")
+   run = agents_client.runs.create_and_process(thread_id=thread.id, agent_id=triage_agent.id)
+        
+   if run.status == "failed":
+        print(f"Run failed: {run.last_error}")
+
+   # Fetch and display messages
+   messages = agents_client.messages.list(thread_id=thread.id, order=ListSortOrder.ASCENDING)
+   for message in messages:
+        if message.text_messages:
+            last_msg = message.text_messages[-1]
+            print(f"{message.role}:\n{last_msg.text.value}\n")
+   
     ```
 
+1. 找到注释“清理”****，并输入以下代码以删除不再需要的代理：
+
+    ```python
+   # Clean up
+   print("Cleaning up agents:")
+   agents_client.delete_agent(triage_agent.id)
+   print("Deleted triage agent.")
+   agents_client.delete_agent(priority_agent.id)
+   print("Deleted priority agent.")
+   agents_client.delete_agent(team_agent.id)
+   print("Deleted team agent.")
+   agents_client.delete_agent(effort_agent.id)
+   print("Deleted effort agent.")
+    ```
+    
 
 1. 使用 **Ctrl+S** 命令保存对代码文件的更改。 可以保持打开状态（如果需要编辑代码以修复任何错误），或使用 **CTRL+Q** 命令关闭代码编辑器，同时保持 Cloud shell 命令行打开状态。
 
@@ -277,7 +339,9 @@ lab:
    python agent_triage.py
     ```
 
-    应会看到类似于下面的信息：
+1. 输入提示，例如 `Users can't reset their password from the mobile app.`
+
+    代理处理提示后，你应会看到类似于以下内容的一些输出：
 
     ```output
     Creating agent thread.

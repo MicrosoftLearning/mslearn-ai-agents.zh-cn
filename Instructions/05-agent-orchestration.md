@@ -1,16 +1,18 @@
 ---
 lab:
-  title: 使用语义内核开发多代理解决方案
-  description: 了解如何配置多代理以使用语义内核 SDK 进行协作
+  title: 使用 Microsoft Agent Framework 开发多智能体解决方案
+  description: 了解如何使用 Microsoft Agent Framework SDK 配置多个智能体进行协作
 ---
 
 # 开发多代理解决方案
 
-在本练习中，你将创建一个项目，使用语义内核 SDK 协调两个 AI 代理。 *事件管理器*代理将分析服务日志文件中的问题。 如果发现问题，事件管理器将推荐解决方案操作，*DevOps 助手*代理将收到建议并调用纠正函数并执行解决方法。 然后，事件管理器代理将查看更新的日志，以确保解决方案成功。
+在本练习中，你将练习在 Microsoft Agent Framework SDK 中使用顺序业务流程模式。 你将创建一个简单的管道，其中包含三个代理，共同处理客户反馈并建议后续步骤。 你将创建以下代理：
 
-在本练习中，提供了四个示例日志文件。 “DevOps 助手”代理代码仅使用一些示例日志消息更新示例日志文件。
+- “摘要生成器”代理会将原始反馈浓缩为简短、中立的语句。
+- “分类器”代理会将反馈归类为“正面”、“负面”或“功能”请求。
+- 最后，“建议的操作”代理会推荐适当的后续步骤。
 
-> **提示**：本练习中使用的代码基于适用于 Python 的 Semantic Kernel SDK。 可以使用适用于 Microsoft .NET 和 Java 的 SDK 开发类似解决方案。 有关详细信息，请参阅[支持的语义内核语言](https://learn.microsoft.com/semantic-kernel/get-started/supported-languages)。
+你将了解如何使用 Microsoft Agent Framework SDK 分解问题、通过正确的智能体路由问题并生成可操作的结果。 现在就开始吧！
 
 完成此练习大约需要 30 分钟。
 
@@ -31,20 +33,15 @@ lab:
     - **Azure AI Foundry 资源**：*Azure AI Foundry 资源的有效名称*
     - **订阅**：Azure 订阅
     - **资源组**：*创建或选择资源组*
-    - **区域**：*选择任何**支持 AI 服务的位置***\*
+    - **区域**：选择推荐的任何 AI Foundry******\*
 
     > \* 某些 Azure AI 资源受区域模型配额约束。 如果稍后在练习中达到配额限制，你可能需要在不同的区域中创建另一个资源。
 
 1. 选择“**创建**”并等待项目（包括所选的 gpt-4 模型部署）创建。
+
 1. 创建项目后，将自动打开聊天操场。
 
-    > **备注**：对于本练习，此模型的默认 TPM 设置可能太低。 减少 TPM 有助于避免过度使用正在使用的订阅中可用的配额。 
-
 1. 在左侧导航窗格中，选择“**模型和终结点**”，然后选择 **gpt-4o** 部署。
-
-1. 选择“**编辑**”，然后增加“**每分钟令牌速率限制**”
-
-   > **备注**：40,000 TPM 足以应对本练习使用的数据。 如果可用配额低于上述 50,000 TPM，你仍然可完成本练习，但超过速率限制时可能需要等待并重新提交提示。
 
 1. 在“**设置**”窗格中，记下模型部署的名称；应为 **gpt-4o**。 可以通过在“**模型和终结点**”页中查看部署来确认这一点（只需在左侧导航窗格中打开该页）。
 1. 在左侧导航窗格中，选择“**概述**”以查看项目的主页；如下所示：
@@ -96,10 +93,8 @@ lab:
     ```
    python -m venv labenv
    ./labenv/bin/Activate.ps1
-   pip install python-dotenv azure-identity semantic-kernel --upgrade
+   pip install azure-identity agent-framework
     ```
-
-    > **注意**：安装语义内核时，会自动安装与语义内核兼容的 azure-ai-projects 版本。****
 
 1. 输入以下命令以编辑所提供的配置文件：
 
@@ -109,7 +104,7 @@ lab:
 
     该文件已在代码编辑器中打开。
 
-1. 在代码文件中，将 **your_project_endpoint** 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“**概述**”页复制而来），并将 **your_model_deployment** 占位符替换为 分配给 gpt-4 模型部署的名称。
+1. 在代码文件中，将 your_openai_endpoint 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“概述”页复制）。******** 将 your_model_deployment 占位符替换为分配给 gpt-4o 模型部署的名称。****
 
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
@@ -117,157 +112,104 @@ lab:
 
 现在，你已准备好为多代理解决方案创建代理！ 现在就开始吧！
 
-1. 输入以下命令以编辑 **agent_chat.py** 文件：
+1. 输入以下命令以编辑 agents.py**** 文件：
 
     ```
-   code agent_chat.py
+   code agents.py
     ```
 
-1. 查看文件中的代码，注意其中包含：
-    - 定义两个代理的名称和指令的常量。
-    - **main** 函数，用于添加实现多代理解决方案的大部分代码。
-    - **SelectionStrategy** 类，用于实现确定每个回合对话中应选择哪个代理所需的逻辑。
-    - **ApprovalTerminationStrategy** 类，用于实现确定会话结束时间所需的逻辑。
-    - **DevopsPlugin** 类，包含用于执行 DevOps 操作的函数。
-    - **LogFilePlugin** 类，包含用于读取和写入日志文件的函数。
-
-    首先，你将创建 *事件管理器* 代理，该代理将分析服务日志文件、识别潜在问题，并在必要时建议解决操作或升级问题。
-
-1. 记下 **INCIDENT_MANAGER_INSTRUCTIONS** 字符串。 这些是代理的说明。
-
-1. 在 **main** 函数中，查找注释 **Create the incident manager agent on the Azure AI agent service**，并添加以下代码以创建 Azure AI 代理。
+1. 在文件顶部的注释“添加首选项”**** 下，添加以下代码，以引用实现代理所需的库中的命名空间：
 
     ```python
-   # Create the incident manager agent on the Azure AI agent service
-   incident_agent_definition = await client.agents.create_agent(
-        model=ai_agent_settings.model_deployment_name,
-        name=INCIDENT_MANAGER,
-        instructions=INCIDENT_MANAGER_INSTRUCTIONS
+   # Add references
+   import asyncio
+   from typing import cast
+   from agent_framework import ChatMessage, Role, SequentialBuilder, WorkflowOutputEvent
+   from agent_framework.azure import AzureAIAgentClient
+   from azure.identity import AzureCliCredential
+    ```
+
+1. 在 main 函数中，花点时间查看智能体说明。**** 这些说明定义业务流程中每个智能体的行为。
+
+1. 在注释“Create the chat client”下添加以下代码****：
+
+    ```python
+   # Create the chat client
+   credential = AzureCliCredential()
+   async with (
+       AzureAIAgentClient(async_credential=credential) as chat_client,
+   ):
+    ```
+
+1. 在注释“Create agents”下添加以下代码：****
+
+    （请务必保持缩进级别）
+
+    ```python
+   # Create agents
+   summarizer = chat_client.create_agent(
+       instructions=summarizer_instructions,
+       name="summarizer",
+   )
+
+   classifier = chat_client.create_agent(
+       instructions=classifier_instructions,
+       name="classifier",
+   )
+
+   action = chat_client.create_agent(
+       instructions=action_instructions,
+       name="action",
    )
     ```
 
-    此代码在 Azure AI 项目客户端上创建代理定义。
+## 创建顺序式业务流程
 
-1. 查找注释 **Create a Semantic Kernel agent for the Azure AI incident manager agent**，并添加以下代码，以基于 Azure AI 代理定义创建语义内核代理。
-
-    ```python
-   # Create a Semantic Kernel agent for the Azure AI incident manager agent
-   agent_incident = AzureAIAgent(
-        client=client,
-        definition=incident_agent_definition,
-        plugins=[LogFilePlugin()]
-   )
-    ```
-
-    此代码创建具有 **LogFilePlugin** 访问权限的语义内核代理。 此插件允许代理读取日志文件内容。
-
-    现在让我们创建第二个代理，它将响应问题并执行 DevOps 操作来解决这些问题。
-
-1. 在代码文件的顶部，花点时间观察 **DEVOPS_ASSISTANT_INSTRUCTIONS** 字符串。 这些指令将提供给新的 DevOps 助手代理。
-
-1. 查找注释 **Create the devops agent on the Azure AI agent service**，并添加以下代码以创建 Azure AI 代理定义：
+1. 在 main 函数中，找到注释“Initialize the current feedback”并添加以下代码：********
     
-    ```python
-   # Create the devops agent on the Azure AI agent service
-   devops_agent_definition = await client.agents.create_agent(
-        model=ai_agent_settings.model_deployment_name,
-        name=DEVOPS_ASSISTANT,
-        instructions=DEVOPS_ASSISTANT_INSTRUCTIONS,
-   )
-    ```
-
-1. 查找注释 **Create a Semantic Kernel agent for the devops Azure AI agent**，并添加以下代码以基于 Azure AI 代理定义创建语义内核代理。
-    
-    ```python
-   # Create a Semantic Kernel agent for the devops Azure AI agent
-   agent_devops = AzureAIAgent(
-        client=client,
-        definition=devops_agent_definition,
-        plugins=[DevopsPlugin()]
-   )
-    ```
-
-    **DevopsPlugin** 允许代理模拟 DevOps 任务，例如重启服务或回滚事务。
-
-### 定义群组聊天策略
-
-现在，需要提供用于确定应选择哪个代理来轮次对话，以及何时应结束对话的逻辑。
-
-让我们从 **SelectionStrategy** 开始，它确定哪个代理应该进行下一个轮次。
-
-1. 在 **SelectionStrategy** 类（位于 **main** 函数下方）中，查找注释 **Select the next agent that should take the next turn in the chat**，并添加以下代码以定义选择函数：
+    （请务必保持缩进级别）
 
     ```python
-   # Select the next agent that should take the next turn in the chat
-   async def select_agent(self, agents, history):
-        """"Check which agent should take the next turn in the chat."""
-
-        # The Incident Manager should go after the User or the Devops Assistant
-        if (history[-1].name == DEVOPS_ASSISTANT or history[-1].role == AuthorRole.USER):
-            agent_name = INCIDENT_MANAGER
-            return next((agent for agent in agents if agent.name == agent_name), None)
-        
-        # Otherwise it is the Devops Assistant's turn
-        return next((agent for agent in agents if agent.name == DEVOPS_ASSISTANT), None)
+   # Initialize the current feedback
+   feedback="""
+   I use the dashboard every day to monitor metrics, and it works well overall. 
+   But when I'm working late at night, the bright screen is really harsh on my eyes. 
+   If you added a dark mode option, it would make the experience much more comfortable.
+   """
     ```
 
-    此代码按每个轮次运行以确定哪个代理应做出响应，并检查聊天历史记录以查看上次响应的人员。
-
-    现在，让我们实现 **ApprovalTerminationStrategy** 类，以帮助在目标完成且对话可以结束时发出信号。
-
-1. 在 **ApprovalTerminationStrategy** 类中，查找注释 **End the chat if the agent has indicated there is no action needed**，并添加以下代码来定义终止函数：
+1. 在注释“Build a sequential orchestration”下，添加以下代码以使用定义的智能体定义顺序业务流程：****
 
     ```python
-   # End the chat if the agent has indicated there is no action needed
-   async def should_agent_terminate(self, agent, history):
-        """Check if the agent should terminate."""
-        return "no action needed" in history[-1].content.lower()
+   # Build sequential orchestration
+   workflow = SequentialBuilder().participants([summarizer, classifier, action]).build()
     ```
 
-    内核在代理响应后调用此函数，以确定是否满足完成条件。 在这种情况下，当事件管理器响应“无需执行任何操作”时，即达到目标。 此短语在事件管理器代理指令中定义。
+    智能体将按照将反馈添加到业务流程的顺序进行处理。
 
-### 实现群组聊天
-
-现在有两个代理和可帮助其轮次和结束聊天的策略，你可以实现群组聊天。
-
-1. 在 main 函数中备份，查找注释 **Add the agents to a group chat with a custom termination and selection strategy**，并添加以下代码以创建群组聊天：
+1. 在注释“Run and collect outputs”下添加以下代码****：
 
     ```python
-   # Add the agents to a group chat with a custom termination and selection strategy
-   chat = AgentGroupChat(
-        agents=[agent_incident, agent_devops],
-        termination_strategy=ApprovalTerminationStrategy(
-            agents=[agent_incident], 
-            maximum_iterations=10, 
-            automatic_reset=True
-        ),
-        selection_strategy=SelectionStrategy(agents=[agent_incident,agent_devops]),      
-   )
+   # Run and collect outputs
+   outputs: list[list[ChatMessage]] = []
+   async for event in workflow.run_stream(f"Customer feedback: {feedback}"):
+       if isinstance(event, WorkflowOutputEvent):
+           outputs.append(cast(list[ChatMessage], event.data))
     ```
 
-    在此代码中，你将使用事件管理器和 DevOps 代理创建代理群组聊天对象。 还可以定义聊天的终止和选择策略。 请注意，**ApprovalTerminationStrategy** 仅与事件管理器代理关联，不与 DevOps 代理关联。 这使得事件管理器代理负责发出聊天结束的信号。 **SelectionStrategy** 包括所有应轮次聊天的代理。
+    此代码将运行业务流程，并从每个参与智能体收集输出。
 
-    请注意，自动重置标志将在聊天结束时自动清除聊天。 这样，代理就可以继续分析文件，无需使用过多不必要令牌的聊天历史记录对象。 
-
-1. 查找注释 **Append the current log file to the chat**，并添加以下代码以将最近读取的日志文件文本添加到聊天：
+1. 在注释“Display outputs”下添加以下代码：****
 
     ```python
-   # Append the current log file to the chat
-   await chat.add_chat_message(logfile_msg)
-   print()
+   # Display outputs
+   if outputs:
+       for i, msg in enumerate(outputs[-1], start=1):
+           name = msg.author_name or ("assistant" if msg.role == Role.ASSISTANT else "user")
+           print(f"{'-' * 60}\n{i:02d} [{name}]\n{msg.text}")
     ```
 
-1. 查找注释 **Invoke a response from the agents**，并添加以下代码以调用群组聊天：
-
-    ```python
-   # Invoke a response from the agents
-   async for response in chat.invoke():
-        if response is None or not response.name:
-            continue
-        print(f"{response.content}")
-    ```
-
-    这是触发聊天的代码。 由于已将日志文件文本添加为消息，因此选择策略将确定哪个代理应读取和响应此消息，然后代理之间的对话将继续，直到满足终止策略的条件或达到最大迭代次数。
+    此代码会格式化并显示从业务流程收集的工作流输出中的消息。
 
 1. 使用 **Ctrl+S** 命令保存对代码文件的更改。 可以保持打开状态（如果需要编辑代码以修复任何错误），或使用 **CTRL+Q** 命令关闭代码编辑器，同时保持 Cloud shell 命令行打开状态。
 
@@ -290,41 +232,42 @@ lab:
 1. 登录后，输入以下命令来运行应用程序：
 
     ```
-   python agent_chat.py
+   python agents.py
     ```
 
     应会看到类似于下面的信息：
 
     ```output
-    
-    INCIDENT_MANAGER > /home/.../logs/log1.log | Restart service ServiceX
-    DEVOPS_ASSISTANT > Service ServiceX restarted successfully.
-    INCIDENT_MANAGER > No action needed.
+    ------------------------------------------------------------
+    01 [user]
+    Customer feedback:
+        I use the dashboard every day to monitor metrics, and it works well overall.
+        But when I'm working late at night, the bright screen is really harsh on my eyes.
+        If you added a dark mode option, it would make the experience much more comfortable.
 
-    INCIDENT_MANAGER > /home/.../logs/log2.log | Rollback transaction for transaction ID 987654.
-    DEVOPS_ASSISTANT > Transaction rolled back successfully.
-    INCIDENT_MANAGER > No action needed.
-
-    INCIDENT_MANAGER > /home/.../logs/log3.log | Increase quota.
-    DEVOPS_ASSISTANT > Successfully increased quota.
-    (continued)
+    ------------------------------------------------------------
+    02 [summarizer]
+    User requests a dark mode for better nighttime usability.
+    ------------------------------------------------------------
+    03 [classifier]
+    Feature request
+    ------------------------------------------------------------
+    04 [action]
+    Log as enhancement request for product backlog.
     ```
 
-    > **备注**：应用包含一些在处理每个日志文件间等待的代码，以尝试降低超出 TPM 速率限制的风险，还包括异常处理代码（以防出现此类情况） 如果订阅配额不足，模型可能无法响应。
+1. （可选）可以尝试使用不同的反馈输入来运行代码，例如：
 
-1. 验证**日志**文件夹中的日志文件是否已使用来自 DevopsAssistant 的解析操作消息进行更新。
-
-    例如，log1.log 应追加以下日志消息：
-
-    ```log
-    [2025-02-27 12:43:38] ALERT  DevopsAssistant: Multiple failures detected in ServiceX. Restarting service.
-    [2025-02-27 12:43:38] INFO  ServiceX: Restart initiated.
-    [2025-02-27 12:43:38] INFO  ServiceX: Service restarted successfully.
+    ```output
+    I use the dashboard every day to monitor metrics, and it works well overall. But when I'm working late at night, the bright screen is really harsh on my eyes. If you added a dark mode option, it would make the experience much more comfortable.
+    ```
+    ```output
+    I reached out to your customer support yesterday because I couldn't access my account. The representative responded almost immediately, was polite and professional, and fixed the issue within minutes. Honestly, it was one of the best support experiences I've ever had.
     ```
 
 ## 总结
 
-在本练习中，已使用 Azure AI 代理服务和语义内核 SDK 创建可以自动检测问题并应用解决方案的 AI 事件和 DevOps 代理。 干得漂亮!
+在本练习中，你练习了使用 Microsoft Agent Framework SDK 的顺序业务流程，将多个智能体组合成一个简化的工作流。 干得漂亮!
 
 ## 清理
 

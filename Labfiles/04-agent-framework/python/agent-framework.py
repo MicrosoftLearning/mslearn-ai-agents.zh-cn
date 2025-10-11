@@ -24,24 +24,14 @@ async def main():
     
 async def process_expenses_data(prompt, expenses_data):
 
-    # Get configuration settings
+    # Create a chat agent
+    
 
-
-    # Connect to the Azure AI Foundry project
-
-        
-        # Define an Azure AI agent that sends an expense claim email
-
-
-        # Create a semantic kernel agent
-
-
-        # Use the agent to process the expenses data
+        # Use the agent to process the expenses data    
 
 
 
-# Create a Plugin for the email functionality
-
+# Create a tool function for the email functionality
 
 
 
