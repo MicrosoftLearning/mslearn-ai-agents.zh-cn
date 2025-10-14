@@ -157,7 +157,7 @@ lab:
    ):
     ```
 
-    请注意，AzureCliCredential 对象将自动包含来自配置的 Azure AI Foundry 项目设置。****
+    请注意，AzureCliCredential 对象将允许你的代码向 Azure 帐户进行身份验证。**** AzureAIAgentClient 对象将自动包含来自 .env 配置的 Azure AI Foundry 项目设置。****
 
 1. 查找注释：**使用代理处理报销申请**，并添加以下代码以创建一个线程供代理运行，然后使用聊天消息调用它。
 

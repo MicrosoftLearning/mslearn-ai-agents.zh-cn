@@ -141,6 +141,8 @@ lab:
    ):
     ```
 
+    请注意，AzureCliCredential 对象将允许你的代码向 Azure 帐户进行身份验证。**** AzureAIAgentClient 对象将自动包含来自 .env 配置的 Azure AI Foundry 项目设置。****
+
 1. 在注释“Create agents”下添加以下代码：****
 
     （请务必保持缩进级别）

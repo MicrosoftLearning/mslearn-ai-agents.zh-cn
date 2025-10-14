@@ -199,6 +199,15 @@ lab:
    print(f"Created message, ID: {message.id}")
     ```
 
+1. 找到“设置审批模式”注释并添加以下代码：****
+
+    ```python
+    # Set approval mode
+    mcp_tool.set_approval_mode("never")
+    ```
+
+    这允许代理自动调用 MCP 工具，而无需用户批准。 如果需要获得批准，必须使用 `mcp_tool.update_headers` 提供标头值。
+
 1. 找到注释“使用 MCP 工具在线程中创建和处理代理运行”，并添加以下代码：****
 
     ```python
