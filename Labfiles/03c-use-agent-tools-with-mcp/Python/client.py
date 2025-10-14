@@ -35,6 +35,9 @@ with agents_client:
     # Create a message on the thread
     
 
+    # Set approval mode
+
+
     # Create and process agent run in thread with MCP tools
     
     
