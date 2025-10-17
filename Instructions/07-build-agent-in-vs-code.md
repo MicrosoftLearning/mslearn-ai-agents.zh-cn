@@ -68,7 +68,7 @@ lab:
 
 1. 在“模型目录”中，找到 gpt-4o 模型（可以使用搜索栏快速查找）。****
 
-    ![Azure AI Foundry VS Code 扩展中“模型目录”的屏幕截图。](media/vs-code-model.png)
+    ![Azure AI Foundry VS Code 扩展中“模型目录”的屏幕截图。](Media/vs-code-model.png)
 
 1. 选择 gpt-4o 模型旁边的“在 Azure 中部署”。****
 
@@ -92,7 +92,7 @@ lab:
 
 1. 选择“智能体”子部分旁边的 +（加号）图标，创建新的 AI 智能体。********
 
-    ![在 Azure AI Foundry VS Code 扩展中创建智能体的屏幕截图。](media/vs-code-new-agent.png)
+    ![在 Azure AI Foundry VS Code 扩展中创建智能体的屏幕截图。](Media/vs-code-new-agent.png)
 
 1. 出现提示时，选择用于保存智能体文件的位置。
 
@@ -117,7 +117,7 @@ lab:
 
 1. 在设计器的“工具”部分中，选择右上角的“添加工具”按钮。********
 
-![在 Azure AI Foundry VS Code 扩展中向智能体添加工具的屏幕截图。](media/vs-code-agent-tools.png)
+![在 Azure AI Foundry VS Code 扩展中向智能体添加工具的屏幕截图。](Media/vs-code-agent-tools.png)
 
 1. 从下拉菜单中选择“MCP 服务器”。****
 
