@@ -6,7 +6,7 @@ lab:
 
 # 使用模型上下文协议 (MCP) 将 AI 智能体连接到工具
 
-在本练习中，你将生成连接到云托管 MCP 服务器的智能体。 该智能体将利用 AI 支持的搜索，帮助开发人员从 Microsoft 官方文档中获取准确、实时的答案。 这对于构建能够为开发人员提供关于 Azure、.NET 和 Microsoft 365 等工具的最新指导的助手非常有用。 该智能体将使用提供的 `microsoft_docs_search` 工具查询文档，并返回相关结果。
+在本练习中，你将生成连接到云托管 MCP 服务器的智能体。 该智能体将利用 AI 支持的搜索，帮助开发人员从 Microsoft 官方文档中获取准确、实时的答案。 这对于构建能够为开发人员提供关于 Azure、.NET 和 Microsoft 365 等工具的最新指导的助手非常有用。 代理将使用可用的 MCP 工具查询文档并返回相关结果。
 
 > **提示**：本练习中使用的代码基于 Azure AI 智能体服务 MCP 支持示例存储库。 如需了解更多信息，请参阅 [Azure OpenAI 演示](https://github.com/retkowsky/Azure-OpenAI-demos/blob/main/Azure%20Agent%20Service/9%20Azure%20AI%20Agent%20service%20-%20MCP%20support.ipynb)或访问[连接模型上下文协议服务器](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/how-to/tools/model-context-protocol)页面。
 
@@ -261,7 +261,7 @@ lab:
     MCP Tool calls:
         Tool Call ID: <<tool-call-id>>
         Type: mcp
-        Type: microsoft_docs_search
+        Type: microsoft_code_sample_search
 
 
     Conversation:
@@ -285,7 +285,7 @@ lab:
     Deleted agent
     ```
 
-    请注意，代理能够自动调用 MCP 工具 `microsoft_docs_search` 来满足请求。
+    请注意，代理能够自动调用 MCP 工具 `microsoft_code_sample_search` 来满足请求。
 
 1. 可以再次（使用命令 `python client.py`）运行应用，请求不同的信息，在每种情况下，代理将尝试使用 MCP 工具查找技术文档。
 
