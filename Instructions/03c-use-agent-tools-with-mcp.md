@@ -94,7 +94,7 @@ lab:
     ```
    python -m venv labenv
    ./labenv/bin/Activate.ps1
-   pip install -r requirements.txt --pre azure-ai-projects mcp
+   pip install -r requirements.txt --pre azure-ai-projects azure-ai-agents mcp
     ```
 
     >**备注：** 可以忽略库安装过程中显示的任何警告或错误消息。
