@@ -1,31 +1,33 @@
 ---
 lab:
-  title: 使用 Azure AI Foundry 开发多代理解决方案
-  description: 了解如何配置多个代理以使用 Azure AI Foundry 代理服务协同工作
+  title: 使用 Microsoft Foundry 开发多智能体解决方案
+  description: 了解如何配置多个智能体以使用 Microsoft Foundry 智能体服务协同工作
 ---
 
 # 开发多代理解决方案
 
-在本练习中，你将创建一个项目，利用 Azure AI Foundry 代理服务来编排多个 AI 代理的协作与执行。 你将设计一个 AI 解决方案，用于协助处理票证会审。 连接的智能体将评估票证的优先级，为团队分配提出建议，并确定完成票证所需的工作量级别。 现在就开始吧！
+在本练习中，你将创建一个项目，利用 Microsoft Foundry 智能体服务来编排多个 AI 智能体。 你将设计一个 AI 解决方案，用于协助处理票证会审。 连接的智能体将评估票证的优先级，为团队分配提出建议，并确定完成票证所需的工作量级别。 现在就开始吧！
 
-> **提示**：本练习中使用的代码基于适用于 Python 的 Azure AI Foundry SDK。 可以使用适用于 Microsoft .NET、JavaScript 和 Java 的 SDK 开发类似的解决方案。 有关详细信息，请参阅 [Azure AI Foundry SDK 客户端库](https://learn.microsoft.com/azure/ai-foundry/how-to/develop/sdk-overview)。
+> **提示**：本练习中使用的代码基于适用于 Python 的 Foundry SDK。 可以使用适用于 Microsoft .NET、JavaScript 和 Java 的 SDK 开发类似的解决方案。 有关详细信息，请参阅 [Foundry SDK 客户端库](https://learn.microsoft.com/azure/ai-foundry/how-to/develop/sdk-overview)。
 
 完成此练习大约需要 30 分钟。
 
 > **注意**：本练习中使用的一些技术处于预览版或积极开发阶段。 可能会遇到一些意想不到的行为、警告或错误。
 
-## 创建 Azure AI Foundry 项目
+## 创建 Foundry 项目
 
-让我们首先创建 Azure AI Foundry 项目。
+首先创建一个 Foundry 项目。
 
-1. 在 Web 浏览器中打开 [Azure AI Foundry 门户](https://ai.azure.com)，网址为：`https://ai.azure.com`，然后使用 Azure 凭据登录。 关闭首次登录时打开的任何使用技巧或快速入门窗格，如有必要，使用左上角的 **Azure AI Foundry** 徽标导航到主页，类似下图所示（若已打开**帮助**面板，请关闭）：
+1. 在 Web 浏览器中，打开 [Foundry 门户](https://ai.azure.com) (`https://ai.azure.com`)，然后使用你的 Azure 凭据登录。 关闭首次登录时打开的任何使用技巧或快速入门窗格，如有必要，使用左上角的 Foundry**** 徽标导航到主页，类似下图所示（如果已打开“帮助”**** 面板，请关闭它）：
 
-    ![Azure AI Foundry 门户的屏幕截图。](./Media/ai-foundry-home.png)
+    ![Foundry 门户的屏幕截图。](./Media/ai-foundry-home.png)
+
+    > **重要说明**：确保此实验室的 “新建 Foundry”切换开关为“关闭”状态。******
 
 1. 在主页中，选择“**创建代理**”。
 1. 当提示创建项目时，输入项目的有效名称并展开“**高级选项**”。
 1. 为项目确认以下设置：
-    - **Azure AI Foundry 资源**：*Azure AI Foundry 资源的有效名称*
+    - Foundry 资源****：Foundry 资源的有效名称**
     - **订阅**：Azure 订阅
     - **资源组**：*创建或选择资源组*
     - **区域**：选择推荐的任何 AI Foundry******\*
@@ -41,9 +43,9 @@ lab:
 
 1. 在左侧导航窗格中，选择“**概述**”以查看项目的主页；如下所示：
 
-    ![Azure AI Foundry 项目概述页面的屏幕截图。](./Media/ai-foundry-project.png)
+    ![Foundry 项目概述页面的屏幕截图。](./Media/ai-foundry-project.png)
 
-1. 将 **Azure AI Foundry 项目终结点**值复制到记事本，因为你将使用它们连接到客户端应用程序中的项目。
+1. 将 Foundry 项目终结点的值复制到记事本，因为你将使用这些值连接到客户端应用程序中的项目。****
 
 ## 创建 AI 代理客户端应用
 
@@ -51,7 +53,7 @@ lab:
 
 ### 准备环境
 
-1. 打开新的浏览器选项卡（使 Azure AI Foundry 门户在现有选项卡中保持打开状态）。 然后在新选项卡中，浏览到 [Azure 门户](https://portal.azure.com)，网址为：`https://portal.azure.com`；如果出现提示，请使用 Azure 凭据登录。
+1. 打开一个新的浏览器标签页（Foundry 门户在现有标签页中保持打开状态）。 然后在新选项卡中，浏览到 [Azure 门户](https://portal.azure.com)，网址为：`https://portal.azure.com`；如果出现提示，请使用 Azure 凭据登录。
 
     关闭任何欢迎通知以查看 Azure 门户主页。
 
@@ -101,7 +103,7 @@ lab:
 
     该文件已在代码编辑器中打开。
 
-1. 在代码文件中，将 your_project_endpoint**** 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“概述”**** 页复制），并将 your_model_deployment**** 占位符替换为分配给 gpt-4o 模型部署的名称（默认为 `gpt-4o`）。
+1. 在代码文件中，将 your_project_endpoint**** 占位符替换为项目的终结点（从 Foundry 门户中的项目“概述”**** 页复制），并将 your_model_deployment**** 占位符替换为分配给 gpt-4o 模型部署的名称（默认为 `gpt-4o`）。
 
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
@@ -331,7 +333,7 @@ lab:
 
     > **备注**：在大多数情况下，仅使用 *az login* 就足够了。 但是，如果在多个租户中有订阅，则可能需要使用 *--tenant* 参数指定租户。 有关详细信息，请参阅[使用 Azure CLI 以交互方式登录到 Azure](https://learn.microsoft.com/cli/azure/authenticate-azure-cli-interactively)。
 
-1. 出现提示时，请按照说明在新选项卡中打开登录页，并输入提供的验证码和 Azure 凭据。 然后在命令行中完成登录过程，并在出现提示时选择包含 Azure AI Foundry 中心的订阅。
+1. 出现提示时，请按照说明在新选项卡中打开登录页，并输入提供的验证码和 Azure 凭据。 然后在命令行中完成登录过程，并在出现提示时选择包含 Foundry 中心的订阅。
 
 1. 登录后，输入以下命令来运行应用程序：
 

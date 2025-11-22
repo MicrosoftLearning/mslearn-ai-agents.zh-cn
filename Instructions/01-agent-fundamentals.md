@@ -1,29 +1,31 @@
 ---
 lab:
   title: 探索 AI 代理开发
-  description: 通过探索 Azure AI Foundry 门户中的 Azure AI 代理服务，迈出开发 AI 代理的第一步。
+  description: 通过探索 Microsoft Foundry 门户中的 Azure AI 智能体服务，迈出开发 AI 智能体的第一步。
 ---
 
 # 探索 AI 代理开发
 
-在本练习中，你将使用 Azure AI Foundry 门户中的 Azure AI 代理服务创建用于协助员工费用报销的简单 AI 代理。
+在本练习中，你将使用 Microsoft Foundry 门户中的 Azure AI 智能体服务创建一个简单的 AI 智能体，用于协助员工进行费用报销。
 
 此练习大约需要 **30** 分钟。
 
 > **注意**：本练习中使用的一些技术处于预览版或积极开发阶段。 可能会遇到一些意想不到的行为、警告或错误。
 
-## 创建 Azure AI Foundry 项目和代理
+## 创建 Foundry 项目和智能体
 
-让我们首先创建 Azure AI Foundry 项目。
+首先创建一个 Foundry 项目。
 
-1. 在 Web 浏览器中打开 [Azure AI Foundry 门户](https://ai.azure.com)，网址为：`https://ai.azure.com`，然后使用 Azure 凭据登录。 关闭首次登录时打开的任何使用技巧或快速入门窗格，如有必要，使用左上角的 **Azure AI Foundry** 徽标导航到主页，类似下图所示（若已打开**帮助**面板，请关闭）：
+1. 在 Web 浏览器中，打开 [Foundry 门户](https://ai.azure.com) (`https://ai.azure.com`)，然后使用你的 Azure 凭据登录。 关闭首次登录时打开的任何使用技巧或快速入门窗格，如有必要，使用左上角的 Foundry**** 徽标导航到主页，类似下图所示（如果已打开“帮助”**** 面板，请关闭它）：
 
-    ![Azure AI Foundry 门户的屏幕截图。](./Media/ai-foundry-home.png)
+    ![Foundry 门户的屏幕截图。](./Media/ai-foundry-home.png)
+
+    > **重要说明**：确保此实验室的 “新建 Foundry”切换开关为“关闭”状态。******
 
 1. 在主页中，选择“**创建代理**”。
 1. 当提示创建项目时，输入项目的有效名称。
 1. 展开“**高级选项**”，并指定以下设置：
-    - **Azure AI Foundry 资源**：*Azure AI Foundry 资源的有效名称*
+    - Foundry 资源****：Foundry 资源的有效名称**
     - **订阅**：Azure 订阅
     - **资源组**：*选择你的资源组，或新建一个资源组*
     - 区域****：**选择任何推荐的 AI Foundry****\**
@@ -37,7 +39,7 @@ lab:
 
 1. 创建项目后，代理操场将自动打开，以便可以选择或部署模型：
 
-    ![Azure AI Foundry 项目代理操场的屏幕截图。](./Media/ai-foundry-agents-playground.png)
+    ![Foundry 项目智能体操场的屏幕截图。](./Media/ai-foundry-agents-playground.png)
 
     >**备注**：创建代理和项目时，会自动部署 GPT-4o 基本模型。
 
@@ -57,7 +59,7 @@ lab:
    If a user wants to submit an expense claim, you get their email address, a description of the claim, and the amount to be claimed and write the claim details to a text file that the user can download.
     ```
 
-    ![Azure AI Foundry 门户中 AI 代理设置页的屏幕截图。](./Media/ai-agent-setup.png)
+    ![Foundry 门户中 AI 智能体设置页面的屏幕截图。](./Media/ai-agent-setup.png)
 
 1. 在“**设置**”窗格的靠下位置，在“**知识**”标题旁边，选择“**+ 添加**”。 然后在“**添加知识**”对话框中，选择“**文件**”。
 1. 在“**添加文件**”对话框中，新建名为`Expenses_Vector_Store`的矢量存储，上传并保存之前下载的 **Expenses_policy.docx** 本地文件。
@@ -79,7 +81,7 @@ lab:
 1. 提交描述报销和金额的提示；例如， `Breakfast cost me $20`。
 1. 代理应使用代码解释器来准备费用报销文本文件，并提供一个链接供你下载。
 
-    ![Azure AI Foundry 门户中代理操场的屏幕截图。](./Media/ai-agent-playground.png)
+    ![Foundry 门户中智能体操场的屏幕截图。](./Media/ai-agent-playground.png)
 
 1. 下载并打开文本文档以查看费用报销详细信息。
 

@@ -1,12 +1,12 @@
 ---
 lab:
   title: 使用 VS Code 扩展开发 AI 智能体
-  description: 使用 Azure AI Foundry VS Code 扩展创建 AI 智能体。
+  description: 使用 Microsoft Foundry VS Code 扩展创建 AI 智能体。
 ---
 
 # 使用 VS Code 扩展开发 AI 智能体
 
-在本练习中，你将使用 Azure AI Foundry VS Code 扩展创建一个智能体，该智能体可以使用模型上下文协议 (MCP) 服务器工具访问外部数据源和 API。 该智能体将能够检索最新信息，并通过 MCP 工具与各种服务交互。
+在本练习中，你将使用 Microsoft Foundry VS Code 扩展创建一个智能体，该智能体可以使用模型上下文协议 (MCP) 服务器工具访问外部数据源和 API。 该智能体将能够检索最新信息，并通过 MCP 工具与各种服务交互。
 
 完成此练习大约需要 30 分钟。
 
@@ -18,7 +18,7 @@ lab:
 - 已安装 Visual Studio Code
 - 有效的 Azure 订阅
 
-## 安装 Azure AI Foundry VS Code 扩展
+## 安装 Foundry VS Code 扩展
 
 首先，安装并设置 VS Code 扩展。
 
@@ -26,9 +26,9 @@ lab:
 
 1. 从左窗格中选择“扩展”（或按 Ctrl+Shift+X）。********
 
-1. 在搜索栏中，键入“Azure AI Foundry”，然后按 Enter。****
+1. 在搜索栏中，键入“Foundry”，然后按 Enter 键。****
 
-1. 从 Microsoft 选择“Azure AI Foundry”扩展，然后单击“安装”。********
+1. 从 Microsoft 选择“Foundry”扩展，然后单击“安装”。********
 
 1. 安装完成后，验证该扩展是否显示在 Visual Studio Code 左侧的主导航栏中。
 
@@ -36,13 +36,13 @@ lab:
 
 现在，你将连接到 Azure 资源，创建一个新的 AI Foundry 项目。
 
-1. 在 VS Code 边栏中，选择“Azure AI Foundry”扩展图标。****
+1. 在 VS Code 边栏中，选择“Foundry”扩展图标。****
 
 1. 在“Azure 资源”视图中，选择“登录到 Azure...”，然后按照身份验证提示操作。****
 
 1. 登录后，从下拉列表中选择 Azure 订阅。
 
-1. 在 Azure AI Foundry 扩展视图中，选择“资源”旁边的 +（加号）图标，创建一个新的 Azure AI Foundry 项目。********
+1. 在 Foundry 扩展视图中，选择“资源”旁边的 +（加号）图标，创建一个新的 Foundry 项目。********
 
 1. 选择是创建新的资源组还是使用现有资源组：
    
@@ -54,7 +54,7 @@ lab:
    若要使用现有资源组，请执行以下操作：****
    - 从列表中选择要使用的资源组，然后按 Enter
 
-1. 在文本框中输入 Azure AI Foundry 项目的名称（例如“ai-agents-project”），然后按 Enter。
+1. 在文本框中输入 Foundry 项目的名称（例如“ai-agents-project”），然后按 Enter 键。
 
 1. 等待项目部署完成。 随即出现一个弹出窗口，显示消息“已成功部署项目”。
 
@@ -64,11 +64,11 @@ lab:
 
 1. 当出现“已成功部署项目”弹出窗口时，选择“部署模型”按钮。**** 此时将打开“模型目录”。
 
-   > **提示**：此外，还可以通过在“资源”部分中选择“模型”旁边的 + 图标，或按 F1 并运行命令“Azure AI Foundry:**************** 打开模型目录”来访问“模型目录”。
+   > **提示**：此外，还可以通过在“资源”部分中选择“模型”旁边的 + 图标，或按 F1 并运行命令“Foundry:**************** 打开模型目录”来访问“模型目录”。
 
 1. 在“模型目录”中，找到 gpt-4o 模型（可以使用搜索栏快速查找）。****
 
-    ![Azure AI Foundry VS Code 扩展中“模型目录”的屏幕截图。](Media/vs-code-model.png)
+    ![Foundry VS Code 扩展中“模型目录”的屏幕截图。](Media/vs-code-model.png)
 
 1. 选择 gpt-4o 模型旁边的“在 Azure 中部署”。****
 
@@ -78,7 +78,7 @@ lab:
    - **模型版本**：保留默认设置
    - 每分钟词元数：**** 保留默认设置
 
-1. 选择左下角的“在 Azure AI Foundry 中部署”。****
+1. 选择左下角的“在 Foundry 中部署”。****
 
 1. 在确认对话框中，选择“部署”以部署模型。****
 
@@ -88,11 +88,11 @@ lab:
 
 接下来，你将使用可视化设计器界面创建一个 AI 智能体。
 
-1. 在 Azure AI Foundry 扩展视图中，找到“资源”部分。****
+1. 在 Foundry 扩展视图中，找到“资源”部分。****
 
 1. 选择“智能体”子部分旁边的 +（加号）图标，创建新的 AI 智能体。********
 
-    ![在 Azure AI Foundry VS Code 扩展中创建智能体的屏幕截图。](Media/vs-code-new-agent.png)
+    ![在 Foundry VS Code 扩展中创建智能体的屏幕截图。](Media/vs-code-new-agent.png)
 
 1. 出现提示时，选择用于保存智能体文件的位置。
 
@@ -117,7 +117,7 @@ lab:
 
 1. 在设计器的“工具”部分中，选择右上角的“添加工具”按钮。********
 
-![在 Azure AI Foundry VS Code 扩展中向智能体添加工具的屏幕截图。](Media/vs-code-agent-tools.png)
+![在 Foundry VS Code 扩展中向智能体添加工具的屏幕截图。](Media/vs-code-agent-tools.png)
 
 1. 从下拉菜单中选择“MCP 服务器”。****
 
@@ -129,9 +129,9 @@ lab:
 
 1. 选择“创建工具”按钮，向智能体添加工具。****
 
-## 将智能体部署到 Azure AI Foundry
+## 将智能体部署到 Foundry
 
-1. 在设计器视图中，选择左下角的“在 Azure AI Foundry 上创建”按钮。****
+1. 在设计器视图中，选择左下角的“在 Foundry 上创建”按钮。****
 
 1. 等待部署完成。
 
@@ -186,15 +186,15 @@ lab:
 
 ## 总结
 
-在本练习中，你已使用 Azure AI Foundry VS Code 扩展通过 MCP 服务器工具创建 AI 智能体。 智能体可以通过模型上下文协议访问外部数据源和 API，从而能够提供最新信息并与各项服务交互。 你还了解了如何在操场中测试智能体，并生成用于编程交互的示例代码。
+在本练习中，你已使用 Foundry VS Code 扩展，通过 MCP 服务器工具创建了一个 AI 智能体。 智能体可以通过模型上下文协议访问外部数据源和 API，从而能够提供最新信息并与各项服务交互。 你还了解了如何在操场中测试智能体，并生成用于编程交互的示例代码。
 
 ## 清理
 
-完成 Azure AI Foundry VS Code 扩展的探索后，应清理资源以避免产生不必要的 Azure 成本。
+在完成对 Foundry VS Code 扩展的探索后，应清理资源，避免产生不必要的 Azure 成本。
 
 ### 删除智能体
 
-1. 在 Azure AI Foundry 门户中，从导航菜单中选择“智能体”。****
+1. 在 Foundry 门户中，从导航菜单中选择“智能体”。****
 
 1. 选择你的智能体，然后选择“删除”按钮。****
 
