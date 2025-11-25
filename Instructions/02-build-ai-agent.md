@@ -8,24 +8,26 @@ lab:
 
 在本练习中，你将使用 Azure AI 代理服务创建一个简单的代理来分析数据和创建图表。 智能体可以使用内置代码解释器** 工具，动态生成分析数据所需的任何代码。
 
-> **提示**：本练习中使用的代码基于适用于 Python 的 Azure AI Foundry SDK。 可以使用适用于 Microsoft .NET、JavaScript 和 Java 的 SDK 开发类似的解决方案。 有关详细信息，请参阅 [Azure AI Foundry SDK 客户端库](https://learn.microsoft.com/azure/ai-foundry/how-to/develop/sdk-overview)。
+> **提示**：本练习中使用的代码基于适用于 Python 的 Microsoft Foundry SDK。 可以使用适用于 Microsoft .NET、JavaScript 和 Java 的 SDK 开发类似的解决方案。 有关详细信息，请参阅 [Microsoft Foundry SDK 客户端库](https://learn.microsoft.com/azure/ai-foundry/how-to/develop/sdk-overview)。
 
 完成此练习大约需要 30 分钟。
 
 > **注意**：本练习中使用的一些技术处于预览版或积极开发阶段。 可能会遇到一些意想不到的行为、警告或错误。
 
-## 创建 Azure AI Foundry 项目
+## 创建 Foundry 项目
 
-让我们首先创建 Azure AI Foundry 项目。
+首先创建一个 Foundry 项目。
 
-1. 在 Web 浏览器中打开 [Azure AI Foundry 门户](https://ai.azure.com)，网址为：`https://ai.azure.com`，然后使用 Azure 凭据登录。 关闭首次登录时打开的任何使用技巧或快速入门窗格，如有必要，使用左上角的 **Azure AI Foundry** 徽标导航到主页，类似下图所示（若已打开**帮助**面板，请关闭）：
+1. 在 Web 浏览器中，打开 [Foundry 门户](https://ai.azure.com) (`https://ai.azure.com`)，然后使用你的 Azure 凭据登录。 关闭首次登录时打开的任何使用技巧或快速入门窗格，如有必要，使用左上角的 Foundry**** 徽标导航到主页，类似下图所示（如果已打开“帮助”**** 面板，请关闭它）：
 
-    ![Azure AI Foundry 门户的屏幕截图。](./Media/ai-foundry-home.png)
+    ![Foundry 门户的屏幕截图。](./Media/ai-foundry-home.png)
+
+    > **重要说明**：确保此实验室的 “新建 Foundry”切换开关为“关闭”状态。******
 
 1. 在主页中，选择“**创建代理**”。
 1. 当提示创建项目时，输入项目的有效名称并展开“**高级选项**”。
 1. 为项目确认以下设置：
-    - **Azure AI Foundry 资源**：*Azure AI Foundry 资源的有效名称*
+    - Foundry 资源****：Foundry 资源的有效名称**
     - **订阅**：Azure 订阅
     - **资源组**：*创建或选择资源组*
     - **区域**：选择推荐的任何 AI Foundry******\*
@@ -41,9 +43,9 @@ lab:
 
 1. 在左侧导航窗格中，选择“**概述**”以查看项目的主页；如下所示：
 
-    ![Azure AI Foundry 项目概述页面的屏幕截图。](./Media/ai-foundry-project.png)
+    ![Foundry 项目概述页面的屏幕截图。](./Media/ai-foundry-project.png)
 
-1. 将 **Azure AI Foundry 项目终结点**值复制到记事本，因为你将使用它们连接到客户端应用程序中的项目。
+1. 将 Foundry 项目终结点的值复制到记事本，因为你将使用这些值连接到客户端应用程序中的项目。****
 
 ## 创建代理客户端应用
 
@@ -51,7 +53,7 @@ lab:
 
 ### 克隆包含应用程序代码的存储库
 
-1. 打开新的浏览器选项卡（使 Azure AI Foundry 门户在现有选项卡中保持打开状态）。 然后在新选项卡中，浏览到 [Azure 门户](https://portal.azure.com)，网址为：`https://portal.azure.com`；如果出现提示，请使用 Azure 凭据登录。
+1. 打开一个新的浏览器标签页（Foundry 门户在现有标签页中保持打开状态）。 然后在新选项卡中，浏览到 [Azure 门户](https://portal.azure.com)，网址为：`https://portal.azure.com`；如果出现提示，请使用 Azure 凭据登录。
 
     关闭任何欢迎通知以查看 Azure 门户主页。
 
@@ -101,7 +103,7 @@ lab:
 
     该文件已在代码编辑器中打开。
 
-1. 在代码文件中，将 your_project_endpoint**** 占位符替换为项目的终结点（从 Azure AI Foundry 门户的项目“概述”**** 页复制），并确保将 MODEL_DEPLOYMENT_NAME 变量设置为模型部署名称（应为 gpt-4o**）。
+1. 在代码文件中，将 your_project_endpoint**** 占位符替换为项目的终结点（从 Foundry 门户的项目“概述”**** 页复制），并确保将 MODEL_DEPLOYMENT_NAME 变量设置为模型部署名称（应为 gpt-4o**）。
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
 ### 为代理应用编写代码
@@ -139,7 +141,7 @@ lab:
    with agent_client:
     ```
 
-    该代码使用当前的 Azure 凭据连接到 Azure AI Foundry 项目。 最后的 *with project_client* 语句启动一个代码块，该代码块定义客户端的范围，确保在块中的代码完成时将其清理干净。
+    该代码使用当前的 Azure 凭据连接到 Foundry 项目。 最后的 *with project_client* 语句启动一个代码块，该代码块定义客户端的范围，确保在块中的代码完成时将其清理干净。
 
 1. 在 *with project_client* 块内，查找注释 **Upload the data file and create a CodeInterpreterTool**，并添加以下代码，以将数据文件上传到项目，并创建可访问其中数据的 CodeInterpreterTool：
 
@@ -252,7 +254,7 @@ lab:
 
     > **备注**：在大多数情况下，仅使用 *az login* 就足够了。 但是，如果在多个租户中有订阅，则可能需要使用 *--tenant* 参数指定租户。 有关详细信息，请参阅[使用 Azure CLI 以交互方式登录到 Azure](https://learn.microsoft.com/cli/azure/authenticate-azure-cli-interactively)。
     
-1. 出现提示时，请按照说明在新选项卡中打开登录页，并输入提供的验证码和 Azure 凭据。 然后在命令行中完成登录过程，并在出现提示时选择包含 Azure AI Foundry 中心的订阅。
+1. 出现提示时，请按照说明在新选项卡中打开登录页，并输入提供的验证码和 Azure 凭据。 然后在命令行中完成登录过程，并在出现提示时选择包含 Foundry 中心的订阅。
 1. 登录后，输入以下命令来运行应用程序：
 
     ```

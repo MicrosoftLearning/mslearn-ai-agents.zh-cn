@@ -12,19 +12,21 @@ lab:
 
 > **注意**：本练习中使用的一些技术处于预览版或积极开发阶段。 可能会遇到一些意想不到的行为、警告或错误。
 
-## 在 Azure AI Foundry 项目中部署模型
+## 在 Microsoft Foundry 项目中部署模型
 
-让我们首先在 Azure AI Foundry 项目中部署模型。
+首先，在 Foundry 项目中部署一个模型。
 
-1. 在 Web 浏览器中打开 [Azure AI Foundry 门户](https://ai.azure.com)，网址为：`https://ai.azure.com`，然后使用 Azure 凭据登录。 关闭首次登录时打开的任何使用技巧或快速入门窗格，如有必要，使用左上角的 **Azure AI Foundry** 徽标导航到主页，类似下图所示（若已打开**帮助**面板，请关闭）：
+1. 在 Web 浏览器中，打开 [Foundry 门户](https://ai.azure.com) (`https://ai.azure.com`)，然后使用你的 Azure 凭据登录。 关闭首次登录时打开的任何使用技巧或快速入门窗格，如有必要，使用左上角的 Foundry**** 徽标导航到主页，类似下图所示（如果已打开“帮助”**** 面板，请关闭它）：
 
-    ![Azure AI Foundry 门户的屏幕截图。](./Media/ai-foundry-home.png)
+    ![Foundry 门户的屏幕截图。](./Media/ai-foundry-home.png)
+
+    > **重要说明**：确保此实验室的 “新建 Foundry”切换开关为“关闭”状态。******
 
 1. 在主页的“**浏览模型和功能**”部分中，搜索 `gpt-4o` 模型；我们将在项目中使用它。
 1. 在搜索结果中，选择 **gpt-4o** 模型以查看其详细信息，然后在模型的页面顶部，选择“**使用此模型**”。
 1. 当提示创建项目时，输入项目的有效名称并展开“**高级选项**”。
 1. 为项目确认以下设置：
-    - **Azure AI Foundry 资源**：*Azure AI Foundry 资源的有效名称*
+    - Foundry 资源****：Foundry 资源的有效名称**
     - **订阅**：Azure 订阅
     - **资源组**：*创建或选择资源组*
     - **区域**：选择推荐的任何 AI Foundry******\*
@@ -36,7 +38,7 @@ lab:
 1. 在“**设置**”窗格中，记下模型部署的名称；应为 **gpt-4o**。 可以通过在“**模型和终结点**”页中查看部署来确认这一点（只需在左侧导航窗格中打开该页）。
 1. 在左侧导航窗格中，选择“**概述**”以查看项目的主页；如下所示：
 
-    ![Azure AI Foundry 门户中 Azure AI 项目详细信息的屏幕截图。](./Media/ai-foundry-project.png)
+    ![Foundry 门户中 Azure AI 项目详细信息的屏幕截图。](./Media/ai-foundry-project.png)
 
 ## 创建代理客户端应用
 
@@ -44,7 +46,7 @@ lab:
 
 ### 准备环境
 
-1. 打开新的浏览器选项卡（使 Azure AI Foundry 门户在现有选项卡中保持打开状态）。 然后在新选项卡中，浏览到 [Azure 门户](https://portal.azure.com)，网址为：`https://portal.azure.com`；如果出现提示，请使用 Azure 凭据登录。
+1. 打开一个新的浏览器标签页（Foundry 门户在现有标签页中保持打开状态）。 然后在新选项卡中，浏览到 [Azure 门户](https://portal.azure.com)，网址为：`https://portal.azure.com`；如果出现提示，请使用 Azure 凭据登录。
 
     关闭任何欢迎通知以查看 Azure 门户主页。
 
@@ -94,7 +96,7 @@ lab:
 
     该文件已在代码编辑器中打开。
 
-1. 在代码文件中，将 **your_project_endpoint** 占位符替换为项目的终结点（从 Azure AI Foundry 门户中的项目“**概述**”页复制而来），并将 **your_model_deployment** 占位符替换为 分配给 gpt-4 模型部署的名称。
+1. 在代码文件中，将 your_project_endpoint**** 占位符替换为项目的终结点（从 Foundry 门户中的项目“概述”**** 页复制），并将 your_model_deployment**** 占位符替换为分配给 gpt-4o 模型部署的名称。
 1. 替换占位符后，使用 **Ctrl+S** 命令保存更改，然后使用 **Ctrl+Q** 命令关闭代码编辑器，同时使 Cloud Shell 命令行保持打开状态。
 
 ### 为代理应用编写代码
@@ -157,7 +159,7 @@ lab:
    ):
     ```
 
-    请注意，AzureCliCredential 对象将允许你的代码向 Azure 帐户进行身份验证。**** AzureAIAgentClient 对象将自动包含来自 .env 配置的 Azure AI Foundry 项目设置。****
+    请注意，AzureCliCredential 对象将允许你的代码向 Azure 帐户进行身份验证。**** AzureAIAgentClient 对象将自动包含来自 .env 配置的 Foundry 项目设置。****
 
 1. 查找注释：**使用代理处理报销申请**，并添加以下代码以创建一个线程供代理运行，然后使用聊天消息调用它。
 
@@ -192,7 +194,7 @@ lab:
 
     > **备注**：在大多数情况下，仅使用 *az login* 就足够了。 但是，如果在多个租户中有订阅，则可能需要使用 *--tenant* 参数指定租户。 有关详细信息，请参阅[使用 Azure CLI 以交互方式登录到 Azure](https://learn.microsoft.com/cli/azure/authenticate-azure-cli-interactively)。
     
-1. 出现提示时，请按照说明在新选项卡中打开登录页，并输入提供的验证码和 Azure 凭据。 然后在命令行中完成登录过程，并在出现提示时选择包含 Azure AI Foundry 中心的订阅。
+1. 出现提示时，请按照说明在新选项卡中打开登录页，并输入提供的验证码和 Azure 凭据。 然后在命令行中完成登录过程，并在出现提示时选择包含 Foundry 中心的订阅。
 1. 登录后，输入以下命令来运行应用程序：
 
     ```
