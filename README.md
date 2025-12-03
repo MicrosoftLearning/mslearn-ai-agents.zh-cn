@@ -1,3 +1,5 @@
+**⚠️ This GitHub repo will retire on 30th December 2025.**
+
 # Develop AI Agents in Azure
 
 此存储库中的练习旨在为你提供动手学习体验，你将在其中探索开发人员在 Microsoft Azure 上生成 AI 代理时执行的常见任务。
